@@ -34,7 +34,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q --block-network"
 
 [tool.ruff]
 line-length = 100

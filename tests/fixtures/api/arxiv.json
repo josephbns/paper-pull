@@ -1,0 +1,57 @@
+[
+  {
+    "entry_id": "https://arxiv.org/abs/2401.99999v2",
+    "published": "2024-01-10T00:00:00+00:00",
+    "updated": "2026-11-11T00:00:00+00:00",
+    "title": "Synthetic quantum paper",
+    "authors": [
+      "Synthetic IBM Author",
+      "Synthetic Clinic Author"
+    ],
+    "doi": "10.5555/synthetic-1",
+    "journal_ref": "Synthetic Quantum Journal 2026",
+    "summary": "Synthetic abstract",
+    "comment": "",
+    "primary_category": "quant-ph",
+    "categories": [
+      "quant-ph"
+    ],
+    "links": []
+  },
+  {
+    "entry_id": "https://arxiv.org/abs/1901.99999v2",
+    "published": "2019-01-01T00:00:00+00:00",
+    "updated": "2026-11-10T00:00:00+00:00",
+    "title": "Synthetic quantum paper",
+    "authors": [
+      "Synthetic Clinic Author"
+    ],
+    "doi": "10.5555/synthetic-1",
+    "journal_ref": "Synthetic Quantum Journal 2026",
+    "summary": "Synthetic abstract",
+    "comment": "",
+    "primary_category": "quant-ph",
+    "categories": [
+      "quant-ph"
+    ],
+    "links": []
+  },
+  {
+    "entry_id": "https://arxiv.org/abs/2402.99999v2",
+    "published": "2024-02-01T00:00:00+00:00",
+    "updated": "2026-02-01T00:00:00+00:00",
+    "title": "Synthetic quantum paper",
+    "authors": [
+      "Synthetic Clinic Author"
+    ],
+    "doi": "10.5555/synthetic-1",
+    "journal_ref": "Synthetic Quantum Journal 2026",
+    "summary": "Synthetic abstract",
+    "comment": "",
+    "primary_category": "quant-ph",
+    "categories": [
+      "quant-ph"
+    ],
+    "links": []
+  }
+]

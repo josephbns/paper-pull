@@ -3,8 +3,9 @@
 A publication monitor for the IBM–Cleveland Clinic collaboration, under development.
 Final exports will have **one row per paper**, combining preprint and journal identifiers.
 
-Milestones 1–2 provide settings, source-record models, normalization, and SQLite history.
-Fetching, matching and exports are not implemented yet; `pubmon run` is not available.
+Milestones 1–3 provide settings, models, normalization, SQLite history, source adapters,
+and `pubmon resolve-institutions`. Matching and exports are not implemented yet;
+`pubmon run` is not available.
 
 ## Development quick start (Python 3.11+)
 
@@ -57,3 +58,64 @@ Two engineering concepts to look for:
   `test_interrupted_run_safe` verifies the database file is byte-identical after failure.
 - **Idempotency:** `Store.upsert_identifier()` keeps one identifier row when called repeatedly.
   `Store.store_decision()` similarly avoids duplicating an unchanged review decision.
+
+## Source adapters (Milestone 3)
+
+- `sources/openalex.py`: `fetch_pair()` and `fetch_clinic_quantum()` return normalized Work
+  lists, checking unique fetched counts against OpenAlex metadata for each query. Pair
+  combinations are unioned by OpenAlex ID; dataset/software records are counted and skipped.
+- `sources/arxiv_src.py`: `fetch_feed()` uses the saved query verbatim; `recheck()` refreshes
+  known IDs in batches of 100, even when they are older than the weekly window. Backfill
+  sorts by submission date so the start-date stopping condition is safe.
+- `sources/crossref.py`: `enrich()` returns DOI publication fields, preprint relations and
+  correction/retraction links. Only HTTP 429 and 5xx errors are retried, up to five attempts.
+- `sources/common.py`: `FetchReport` holds source records, skip counts and notices for later
+  pipeline wiring. `LaneFailed` distinguishes failure from an empty successful search;
+  errors omit underlying request URLs, which may contain credentials.
+
+Correction/retraction notices are separated from normal papers. Linking their Crossref
+`update-to` targets to stored originals and writing audit events arrives in the later pipeline.
+A Crossref response with only a year or month does not invent an exact publication date.
+
+### Institution lookup (live, optional during development)
+
+After setting `OPENALEX_API_KEY` and `PUBMON_EMAIL` securely in your process environment:
+
+```bash
+pubmon resolve-institutions "Cleveland Clinic" "IBM"
+```
+
+This prints candidate IDs, names, ROR, country, work counts and lineage. It never edits
+settings. The supplied parent institution IDs remain defaults; extra entities are an owner
+scope decision. Before feed collection, copy `config/watchlist.example.csv` to the ignored
+`config/watchlist.csv` and review it. The example currently supplies Clinic-side names only;
+provide IBM-side public author names to enable arXiv IBM confirmation.
+
+### Recording real public responses (optional)
+
+All adapter tests use hand-written fixtures; **live API behavior is not yet verified**.
+Three optional tests in `tests/test_source_recordings.py` are skipped until cassettes exist.
+On a machine with the API destinations allowed and environment credentials configured, run
+this exact command from the repository root:
+
+```bash
+python -m pytest tests/test_source_recordings.py --record-mode=once
+```
+
+The destinations are `api.openalex.org`, `export.arxiv.org`, and `api.crossref.org`.
+`tests/conftest.py` removes API-key/contact query parameters and authorization/User-Agent
+headers before cassette writes. Inspect recordings for secrets before committing them.
+After recording, `pytest -q` replays them with network blocked and without real credentials.
+Use `pytest -q --disable-recording` to explicitly omit the optional recording checks.
+
+Two concepts to learn here:
+
+- **Adapters:** `openalex.fetch_pair()` and `arxiv_src.fetch_feed()` translate different APIs
+  into the same Work model. Matching code can use that model without knowing each API format.
+- **Failure isolation:** `common.lane_guard()` raises a safe `LaneFailed` instead of returning
+  an empty list after an outage. Later pipeline code can record that failure and continue
+  other lanes without interpreting missing results as deleted papers.
+
+TODO(owner): verify the Clinic title/abstract filter live, review extra institution scope,
+add public IBM watchlist names, and identify ambiguous names. These do not block offline
+matching development in Milestone 4.

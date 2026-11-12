@@ -54,3 +54,32 @@
 - Run/event orchestration, database backups and the CLI arrive with the later pipeline work.
 - No new TODO(owner) items or blocking ambiguities. Earlier institution/watchlist decisions
   remain open for live collection; no credentials are needed for this milestone.
+
+## 2026-11-12 — Milestone 3
+
+- Implemented OpenAlex pair and Clinic-quantum discovery, arXiv feed/rechecks, and Crossref
+  enrichment. Added institution lookup to the CLI without automatic configuration changes.
+- Added common safe lane errors and FetchReport snapshots/counts/notices for later pipeline
+  wiring. Correction/retraction notices are not returned as new papers.
+- Added hand-written synthetic JSON/Atom fixtures and adapter/CLI/retry/sanitization tests.
+  Validation: 96 tests passed offline and 3 optional live-recording tests were skipped;
+  Ruff lint and formatting passed. No actual API access or live institution verification
+  is claimed. All three API transports were exercised with synthetic HTTP responses.
+- Added default network blocking to pytest. Added VCR configuration that scrubs API-key and
+  contact query parameters and authorization/User-Agent headers, plus a serialization test
+  proving synthetic credential values are absent from saved cassettes.
+- Updated README with the exact recording command and required destinations. Existing
+  OPENALEX_API_KEY and PUBMON_EMAIL bindings were checked by presence only; neither exists
+  in this cloud instance, so live OpenAlex/Crossref checks remain unrun.
+
+### Design corrections and remaining work
+
+- Clarified the backfill ordering in SPEC §4: use submission date, not update date, before
+  applying the publication-date early stop. A recently updated old paper must not hide
+  newer publications. Weekly discovery still sorts by last update.
+- Unknown/unmapped OpenAlex publication types normalize to OTHER. Partial Crossref dates
+  are left unknown instead of inventing missing month/day components.
+- TODO(owner): confirm the Clinic title/abstract filter with live API access; review
+  institution scope and watchlist names as previously documented.
+- Crossref results and correction notices are ready for later matching/CLI orchestration;
+  this milestone does not implement the full run/export pipeline.

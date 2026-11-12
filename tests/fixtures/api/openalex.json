@@ -1,0 +1,434 @@
+{
+  "meta": {
+    "count": 8,
+    "next_cursor": null
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W9991",
+      "title": "Synthetic quantum paper 1",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "article",
+      "doi": "https://doi.org/10.5555/synthetic-1",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9992",
+      "title": "Synthetic quantum paper 2",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "article",
+      "doi": "https://doi.org/10.5555/synthetic-2",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9993",
+      "title": "Synthetic quantum paper 3",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "dataset",
+      "doi": "https://doi.org/10.5555/synthetic-3",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9994",
+      "title": "Synthetic quantum paper 4",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "software",
+      "doi": "https://doi.org/10.5555/synthetic-4",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9995",
+      "title": "Synthetic quantum paper 5",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "erratum",
+      "doi": "https://doi.org/10.5555/synthetic-5",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9996",
+      "title": "Synthetic quantum paper 6",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "retraction",
+      "doi": "https://doi.org/10.5555/synthetic-6",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9997",
+      "title": "Synthetic quantum paper 7",
+      "publication_date": "2024-02-10",
+      "publication_year": 2024,
+      "type": "conference-abstract",
+      "doi": "https://doi.org/10.5555/synthetic-7",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    },
+    {
+      "id": "https://openalex.org/W9998",
+      "title": "Synthetic quantum paper 8",
+      "publication_date": "2020-01-01",
+      "publication_year": 2024,
+      "type": "preprint",
+      "doi": "https://doi.org/10.5555/synthetic-8",
+      "ids": {
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+      },
+      "authorships": [
+        {
+          "author": {
+            "display_name": "Synthetic IBM Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99999",
+              "lineage": [
+                "https://openalex.org/I1341412227"
+              ]
+            }
+          ]
+        },
+        {
+          "author": {
+            "display_name": "Synthetic Clinic Author",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I1316902750",
+              "lineage": []
+            }
+          ]
+        }
+      ],
+      "locations": [
+        {
+          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
+          "pdf_url": null
+        },
+        {
+          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "pdf_url": null
+        }
+      ],
+      "primary_location": {
+        "source": {
+          "display_name": "Synthetic Quantum Journal"
+        }
+      },
+      "is_retracted": false
+    }
+  ]
+}

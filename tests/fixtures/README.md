@@ -34,7 +34,9 @@ and quantum-biomedicine papers. Use them to build realistic arXiv and journal re
 matching tests, and later (with internet) as an integration check that OpenAlex and Crossref
 link each pair. The titles are the published titles; some preprints were titled differently.
 
-## `api/` (created in milestone 3)
+## `api/` (Milestone 3)
 
-Small hand-written JSON responses shaped like OpenAlex, arXiv and Crossref replies, used until
-real cassettes are recorded into `tests/cassettes/`.
+Hand-written synthetic OpenAlex pages, arXiv Result-shaped JSON and Atom XML, and Crossref
+publication/notice responses. They exercise the installed libraries with mocked transports;
+none were downloaded from a live API. Real cassettes can later be recorded into
+`tests/cassettes/` using the README command. The default test run blocks network access.

@@ -1,0 +1,29 @@
+{
+  "status": "ok",
+  "message-type": "work",
+  "message": {
+    "DOI": "10.5555/synthetic-1",
+    "container-title": [
+      "Synthetic Quantum Journal"
+    ],
+    "published": {
+      "date-parts": [
+        [
+          2026,
+          11,
+          1
+        ]
+      ]
+    },
+    "type": "journal-article",
+    "relation": {
+      "has-preprint": [
+        {
+          "id-type": "doi",
+          "id": "https://doi.org/10.5555/preprint"
+        }
+      ]
+    },
+    "update-to": []
+  }
+}

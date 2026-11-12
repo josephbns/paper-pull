@@ -135,7 +135,9 @@ search = arxiv.Search(
 
 - Weekly run: stop paging once a result's `updated` date is older than `arxiv_window_days`
   (default 90).
-- `pubmon run --backfill`: stop once `published` is older than `start_date`. (The current
+- `pubmon run --backfill`: sort by `SubmittedDate` descending, then stop once `published`
+  is older than `start_date`. Sorting by last update here could stop at an old recently
+  updated paper before reaching newer papers. (The current
   query pulls collaborators' whole careers; the start date is what keeps old papers out.)
 - For each hit, record which watchlist names matched its authors (`matched_names`). If every
   matched name is listed in `arxiv.common_names`, set `confidence = uncertain`.
