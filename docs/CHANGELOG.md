@@ -83,3 +83,26 @@
   institution scope and watchlist names as previously documented.
 - Crossref results and correction notices are ready for later matching/CLI orchestration;
   this milestone does not implement the full run/export pipeline.
+
+## 2026-11-12 — Milestone 4
+
+- Rechecked Milestones 1–3 before proceeding: 96 offline tests passed, 3 optional live API
+  checks skipped, lint/format/dependency checks passed. Live connectivity remains unverified.
+- Added `match.py`: normalized identifier/source identity resolution, DOI clues, guarded
+  fuzzy matching, conflict/ambiguity review events, and atomic batch resolution/storage.
+- Added `diff.py`: deterministic material-field comparisons and canonical metadata selection.
+  Published versions retain their preprint IDs; older preprint responses cannot downgrade
+  known publication status. The batch compares before/after once per paper.
+- Added nullable canonical/source snapshot columns through an idempotent additive migration.
+  Kept raw responses separate, retained legacy identities, and tested migration/reopening.
+- Added the six matching acceptance tests and 11 public golden-pair cases with synthetic
+  metadata. Added regression checks for conflicts, missing IDs, batch rollback, stale
+  responses, multi-lane confirmation, decimal/Roman title guards, and adapter-to-store use.
+- Fixed arXiv PDF/HTML URL normalization and added regressions. Identified that checking
+  digits only after punctuation stripping could falsely merge decimal values like 1.2/2.1;
+  matching now checks original titles. Clarified these guards in SPEC §7.
+- Validation: 137 passed offline, 3 optional live-recording tests skipped; lint, format and
+  dependency checks passed. Golden-pair tests prove matching behavior with supplied public
+  IDs, not live API relation coverage. CSV/Excel output acceptance remains Milestone 5.
+- No new TODO(owner) decisions. Existing institution/watchlist/API prerequisites remain open
+  for live collection and do not block offline master/export implementation.

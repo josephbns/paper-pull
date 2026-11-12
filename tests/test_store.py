@@ -318,3 +318,46 @@ def test_source_identity_cannot_silently_move_between_papers(store):
         )
     assert len(store.list_source_records("paper-1")) == 1
     assert store.list_source_records("paper-2") == []
+
+
+def test_legacy_database_migrates_without_losing_history(tmp_path):
+    path = tmp_path / "legacy.db"
+    with sqlite3.connect(path) as connection:
+        connection.execute("""CREATE TABLE works (
+            work_key TEXT PRIMARY KEY NOT NULL, title TEXT, year INT, venue TEXT, type TEXT,
+            status TEXT, ibm_confirmed INT, best_confidence TEXT, first_seen TEXT, last_changed TEXT)
+        """)
+        connection.execute("""CREATE TABLE source_records (
+            source TEXT NOT NULL, source_id TEXT NOT NULL, work_key TEXT NOT NULL,
+            lane TEXT, fetched_at TEXT, raw_json TEXT, raw_hash TEXT,
+            PRIMARY KEY(source, source_id))""")
+        connection.execute(
+            "INSERT INTO works VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                "legacy",
+                "Synthetic legacy paper",
+                2024,
+                None,
+                "preprint",
+                "preprint",
+                0,
+                "review",
+                STAMP,
+                STAMP,
+            ),
+        )
+        connection.execute(
+            "INSERT INTO source_records VALUES (?, ?, ?, ?, ?, ?, ?)",
+            ("openalex", "W9991", "legacy", "pair", STAMP, '{"synthetic":true}', "old-hash"),
+        )
+    with Store(path) as history:
+        assert history.get_work("legacy")["title"] == "Synthetic legacy paper"
+        assert history.get_work_state("legacy") is None
+        record = history.get_source_record(Source.OPENALEX, "W9991")
+        assert record["raw_hash"] == "old-hash" and record["normalized_json"] is None
+        with history.transaction():
+            history.save_work_state("legacy", {"title": "Synthetic canonical state"})
+        assert history.get_work_state("legacy") == {"title": "Synthetic canonical state"}
+    with Store(path) as history:
+        assert len(history.list_works()) == 1
+        assert history.get_work_state("legacy") is not None

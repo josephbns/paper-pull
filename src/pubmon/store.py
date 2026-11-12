@@ -19,7 +19,7 @@ SCHEMA = (
     """CREATE TABLE IF NOT EXISTS works (
         work_key TEXT PRIMARY KEY NOT NULL, title TEXT, year INT, venue TEXT,
         type TEXT, status TEXT, ibm_confirmed INT, best_confidence TEXT,
-        first_seen TEXT, last_changed TEXT)""",
+        first_seen TEXT, last_changed TEXT, state_json TEXT)""",
     """CREATE TABLE IF NOT EXISTS identifiers (
         scheme TEXT NOT NULL, value TEXT NOT NULL,
         work_key TEXT NOT NULL REFERENCES works(work_key),
@@ -27,7 +27,7 @@ SCHEMA = (
     """CREATE TABLE IF NOT EXISTS source_records (
         source TEXT NOT NULL, source_id TEXT NOT NULL,
         work_key TEXT NOT NULL REFERENCES works(work_key), lane TEXT,
-        fetched_at TEXT, raw_json TEXT, raw_hash TEXT,
+        fetched_at TEXT, raw_json TEXT, raw_hash TEXT, normalized_json TEXT,
         PRIMARY KEY (source, source_id))""",
     """CREATE TABLE IF NOT EXISTS events (
         event_id INTEGER PRIMARY KEY, run_id TEXT NOT NULL REFERENCES runs(run_id),
@@ -63,6 +63,13 @@ class Store:
         with self.transaction():
             for statement in SCHEMA:
                 self._db.execute(statement)
+            self._migrate_snapshots()
+
+    def _migrate_snapshots(self) -> None:
+        # Additive migration keeps databases created before matching was implemented.
+        for table, column in (("works", "state_json"), ("source_records", "normalized_json")):
+            if column not in self._db[table].columns_dict:
+                self._write(f'ALTER TABLE "{table}" ADD COLUMN "{column}" TEXT')
 
     def __enter__(self) -> Self:
         """Keep a connection open for a group of operations."""
@@ -119,7 +126,8 @@ class Store:
     ) -> None:
         """Create or update a paper summary while preserving its first-seen date."""
         self._write(
-            """INSERT INTO works VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """INSERT INTO works (work_key, title, year, venue, type, status, ibm_confirmed,
+                best_confidence, first_seen, last_changed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(work_key) DO UPDATE SET
             title=excluded.title, year=excluded.year, venue=excluded.venue,
             type=excluded.type, status=excluded.status,
@@ -199,6 +207,7 @@ class Store:
         fetched_at: str,
         raw: Row,
         raw_hash: str,
+        normalized: Row | None = None,
     ) -> None:
         """Retain the latest raw response for a provider's source identity."""
         existing = self._rows(
@@ -208,10 +217,12 @@ class Store:
         if existing and existing[0]["work_key"] != work_key:
             raise IdentifierConflict((existing[0]["work_key"], work_key))
         self._write(
-            """INSERT INTO source_records VALUES (?, ?, ?, ?, ?, ?, ?)
+            """INSERT INTO source_records (source, source_id, work_key, lane, fetched_at,
+                raw_json, raw_hash, normalized_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(source, source_id) DO UPDATE SET
             work_key=excluded.work_key, lane=excluded.lane, fetched_at=excluded.fetched_at,
-            raw_json=excluded.raw_json, raw_hash=excluded.raw_hash""",
+            raw_json=excluded.raw_json, raw_hash=excluded.raw_hash,
+            normalized_json=excluded.normalized_json""",
             (
                 Source(source),
                 source_id,
@@ -220,6 +231,7 @@ class Store:
                 fetched_at,
                 json.dumps(raw, ensure_ascii=False, sort_keys=True),
                 raw_hash,
+                json.dumps(normalized, ensure_ascii=False, sort_keys=True) if normalized else None,
             ),
         )
 
@@ -319,3 +331,29 @@ class Store:
             (work_key,),
         )
         return rows[0] if rows else None
+
+    def get_source_record(self, source: Source, source_id: str) -> Row | None:
+        """Find a provider identity even when the record has no external identifiers."""
+        rows = self._rows(
+            "SELECT * FROM source_records WHERE source = ? AND source_id = ?",
+            (Source(source), source_id),
+        )
+        return rows[0] if rows else None
+
+    def get_work_state(self, work_key: str) -> Row | None:
+        """Read the canonical matching snapshot, or None for pre-migration records."""
+        row = self.get_work(work_key)
+        return json.loads(row["state_json"]) if row and row["state_json"] else None
+
+    def save_work_state(self, work_key: str, state: Row) -> None:
+        """Persist the canonical snapshot in the same transaction as its audit events."""
+        cursor = self._write(
+            "UPDATE works SET state_json = ? WHERE work_key = ?",
+            (json.dumps(state, ensure_ascii=False, sort_keys=True), work_key),
+        )
+        if cursor.rowcount != 1:
+            raise ValueError("Cannot save a snapshot for an unknown work")
+
+    def list_events(self, work_key: str) -> list[Row]:
+        """Read a paper's complete audit trail, including previously exported events."""
+        return self._rows("SELECT * FROM events WHERE work_key = ? ORDER BY event_id", (work_key,))

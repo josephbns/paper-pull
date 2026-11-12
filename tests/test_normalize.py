@@ -77,3 +77,10 @@ def test_title_normalization(title, expected):
 )
 def test_surname_suffixes_and_accents(name, expected):
     assert surname(name) == expected
+
+
+@pytest.mark.parametrize(
+    "value", ["https://arxiv.org/pdf/2401.12340v2.pdf", "https://arxiv.org/html/2401.12340v2"]
+)
+def test_arxiv_location_url_formats(value):
+    assert normalize_ids(arxiv_id=value)["arxiv_id"] == "2401.12340"

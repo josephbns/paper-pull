@@ -19,9 +19,9 @@ def normalize_ids(
     if arxiv_id and arxiv_id.strip():
         arxiv_id = re.sub(r"^arxiv:\s*", "", arxiv_id.strip(), flags=re.IGNORECASE)
         arxiv_id = re.sub(
-            r"^https?://(?:www\.)?arxiv.org/(?:abs|pdf)/", "", arxiv_id, flags=re.IGNORECASE
+            r"^https?://(?:www\.)?arxiv.org/(?:abs|pdf|html)/", "", arxiv_id, flags=re.IGNORECASE
         )
-        arxiv_id = idutils.normalize_arxiv(arxiv_id)
+        arxiv_id = idutils.normalize_arxiv(arxiv_id.removesuffix(".pdf"))
         # IDUtils adds the display prefix; internal matching uses the bare ID.
         arxiv_id = re.sub(r"^arxiv:\s*", "", arxiv_id, flags=re.IGNORECASE)
         arxiv_id = re.sub(r"v\d+$", "", arxiv_id, flags=re.IGNORECASE)

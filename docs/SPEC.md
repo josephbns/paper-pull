@@ -192,15 +192,20 @@ For DOIs that are new or whose source record changed:
 
 ### SQLite (`data/pubmon.db`, via sqlite-utils)
 
+`works.state_json` retains the canonical normalized paper state; `source_records.normalized_json`
+retains each source version for author/title comparisons. They are separate from untouched raw
+response JSON. Both are nullable additive columns so pre-matching databases migrate without
+losing rows or identifiers. Legacy records acquire normalized snapshots when re-fetched.
+
 ```sql
 works(work_key TEXT PRIMARY KEY,      -- uuid4
       title TEXT, year INT, venue TEXT, type TEXT, status TEXT,   -- status: preprint | published
       ibm_confirmed INT, best_confidence TEXT,
-      first_seen TEXT, last_changed TEXT)
+      first_seen TEXT, last_changed TEXT, state_json TEXT)  -- canonical normalized state
 identifiers(scheme TEXT, value TEXT, work_key TEXT,
       PRIMARY KEY (scheme, value))    -- schemes: doi, arxiv, pmid, openalex. Enforces one record per paper.
 source_records(source TEXT, source_id TEXT, work_key TEXT, lane TEXT,
-      fetched_at TEXT, raw_json TEXT, raw_hash TEXT,
+      fetched_at TEXT, raw_json TEXT, raw_hash TEXT, normalized_json TEXT,
       PRIMARY KEY (source, source_id))
 events(event_id INTEGER PRIMARY KEY, run_id TEXT, work_key TEXT,
       kind TEXT,                      -- NEW | UPDATED | LINKED_PREPRINT | POSSIBLE_DUPLICATE | CORRECTION | RETRACTED
@@ -257,10 +262,23 @@ runs(run_id TEXT PRIMARY KEY, started_at TEXT, finished_at TEXT,
    from the same ±4 years.
    - **Auto-link** only if score ≥ `auto_link` (default 95) **and** first-author surnames match
      or ≥ 2 surnames are shared **and** (later year − earlier year) is between −1 and +3
-     **and** the sets of numbers in both titles are identical (guards "Part I" vs "Part II").
+     **and** the sets of numbers in both original titles are identical. Extract numbers before
+     removing punctuation so `1.2` and `2.1` cannot become the same token set; include Roman
+     `Part I` / `Part II` labels in the guard.
    - Score in [`review`, `auto_link`) (default 85–95): create a new work and write
      `POSSIBLE_DUPLICATE` pointing at the near match. **Never auto-merge in this band.**
 4. Otherwise: new work, `NEW` event.
+
+A stable provider source identity also anchors re-fetched records with no external IDs.
+Contradictory IDs, link clues pointing to different works, or multiple qualifying fuzzy
+matches require review; never silently merge the existing identities or transfer their IDs.
+High title similarity that fails an author/year/number guard is also kept separate for review.
+
+Compare the canonical before/after state once per paper after the whole batch. Prefer
+published metadata (Crossref, then OpenAlex, then arXiv) and retain known nonempty metadata
+when responses omit it. A stale preprint must not downgrade a known journal publication.
+The fuzzy year window means journal year minus preprint year; for equal publication types,
+use absolute year distance. No scoring thresholds are changed by these clarifications.
 
 Thresholds live in `config/settings.toml`. They are starting points (borrowed from
 Crossref's own preprint matcher), not tuned values.

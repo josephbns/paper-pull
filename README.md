@@ -3,9 +3,9 @@
 A publication monitor for the IBM–Cleveland Clinic collaboration, under development.
 Final exports will have **one row per paper**, combining preprint and journal identifiers.
 
-Milestones 1–3 provide settings, models, normalization, SQLite history, source adapters,
-and `pubmon resolve-institutions`. Matching and exports are not implemented yet;
-`pubmon run` is not available.
+Milestones 1–4 provide settings, models, normalization, SQLite history, source adapters,
+institution lookup, matching and change detection. Exports and the full `pubmon run` command
+are not implemented yet.
 
 ## Development quick start (Python 3.11+)
 
@@ -119,3 +119,46 @@ Two concepts to learn here:
 TODO(owner): verify the Clinic title/abstract filter live, review extra institution scope,
 add public IBM watchlist names, and identify ambiguous names. These do not block offline
 matching development in Milestone 4.
+
+## Matching and changes (Milestone 4)
+
+`match.resolve_and_store()` processes a batch of normalized Work objects in one transaction.
+It uses shared identifiers first, then DOI links, then guarded fuzzy matching; otherwise it
+creates a new stable UUID. Conflicting IDs and ambiguous matches remain separate and gain a
+POSSIBLE_DUPLICATE event. Fuzzy matches must pass every configured title, author, year and
+number guard, including decimal numbers and Roman-numeral part labels.
+
+Each source snapshot is retained separately from the canonical paper state. Published
+metadata takes precedence over preprint metadata. Changes are compared once per paper after
+the batch, so rerunning a mixed preprint/journal batch does not generate alternating updates.
+Individual events remain in the audit trail; grouping them into one output row is Milestone 5.
+The run must already exist in the store before calling the batch function.
+
+Supply `raw_records` keyed by `(Source, normalized_source_id)` when original API responses
+are available. For normalized-only callers, a clearly labelled normalized snapshot is kept
+instead; an unchanged source's existing original response is preserved.
+
+The additive migration keeps existing work IDs, raw responses and identifiers. Databases
+created before Milestone 4 gain nullable snapshot columns; normalized author/title evidence
+becomes available when those records are fetched again. Missing legacy evidence is never
+used to justify a fuzzy merge.
+
+Run the complete offline checks from the activated environment:
+
+```bash
+pytest -o addopts='' -q --block-network
+ruff check .
+ruff format --check .
+python -m pip check
+```
+
+Two concepts to learn:
+
+- **Canonical state:** `diff.canonical_state()` selects one current view from multiple source
+  versions. Retaining the originals lets the matcher compare earlier titles and identifiers.
+- **Determinism:** `diff.material_changes()` compares a fixed set of meaningful fields.
+  `match.resolve_and_store()` compares once per paper per batch, avoiding duplicate updates
+  caused by source ordering.
+
+No new owner decisions block Milestone 5. Live API checks, watchlist review and institution
+scope remain outstanding as documented above.
