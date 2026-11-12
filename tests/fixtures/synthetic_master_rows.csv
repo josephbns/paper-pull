@@ -1,0 +1,12 @@
+pub_id,what_this_row_tests
+SYN-0001,Journal row; matched by DOI or arXiv
+SYN-0002,Preprint of SYN-0001 (British spelling in title)
+SYN-0003,Arxiv-only; a later run gains a journal DOI (update test)
+SYN-0004,No IDs and no title: matches only by >=2 shared surnames + date within 30 days
+SYN-0005,arXiv cell shows only the word 'arXiv'; ID is in the hyperlink
+SYN-0006,Talk: not in any database; must stay unmatched
+SYN-0007,Drafting row with no date
+SYN-0008,Name reads like a real title; a candidate titled 'Quantum walks on synthetic protein graphs' by other authors must NOT match this row
+SYN-0009,Must not merge with SYN-0010
+SYN-0010,Must not merge with SYN-0009
+SYN-0011,Clinic-only paper (no IBM authors) that is still in the master

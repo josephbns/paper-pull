@@ -1,0 +1,12 @@
+arxiv_id,doi,journal,published_title
+2410.09209,10.1038/s42005-025-02305-9,Communications Physics,Accurate quantum-centric simulations of intermolecular interactions
+2411.09861,10.1021/acs.jctc.5c00114,J. Chem. Theory Comput.,Toward Quantum-Centric Simulations of Extended Molecules: Sample-Based Quantum Diagonalization Enhanced with Density Matrix Embedding Theory
+2512.17130,10.1021/acs.jctc.6c00364,J. Chem. Theory Comput.,Molecular Quantum Computations on a Protein
+2411.10511,10.1016/j.patter.2025.101236,Patterns,How quantum computing can enhance biomarker discovery
+2404.13113,10.1016/j.tips.2024.08.005,Trends in Pharmacological Sciences,Towards quantum computing for clinical trial design and optimization: A perspective on new opportunities and challenges
+2312.00875,10.1021/acs.jctc.4c00067,J. Chem. Theory Comput.,A perspective on protein structure prediction using quantum computers
+2506.22677,10.1002/advs.202513641,Advanced Science,A Quantum Framework for Protein Binding-Site Structure Prediction on Utility-Level Quantum Processors
+2502.10189,10.1021/acs.jpcb.5c01030,J. Phys. Chem. B,Implicit Solvent Sample-Based Quantum Diagonalization
+2506.20825,10.1021/acs.jctc.6c00526,J. Chem. Theory Comput.,Quantum-Centric Alchemical Free Energy Calculations
+2502.13056,10.1038/s41598-026-35605-3,Scientific Reports,Benchmarking MedMNIST dataset on real quantum hardware
+2508.08200,10.1093/bib/bbag084,Briefings in Bioinformatics,Pangenome-guided sequence assembly via binary optimization

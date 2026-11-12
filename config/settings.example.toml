@@ -1,0 +1,32 @@
+# pubmon settings — copy to config/settings.toml (git-ignored) and fill the TODOs.
+# Public information only. Keys and emails go in environment variables, never here.
+
+start_date = "2021-01-01"     # no lane looks earlier than this (the partnership's start)
+arxiv_window_days = 90         # weekly arXiv lane looks back this far by last-updated date
+
+[openalex]
+# Parent IDs, checked live 12 Nov 2026. `lineage` covers child entities (IBM Research
+# Watson/Almaden/Zurich/Haifa/Tokyo/...; Cleveland Clinic Research, Lerner College, Florida).
+ibm_institution_ids = ["I1341412227"]   # IBM (United States), ROR 05hh8d621
+cc_institution_ids = ["I1316902750"]    # Cleveland Clinic, ROR 03xjacd83
+# TODO(owner): decide on entities OUTSIDE those lineages:
+#   IBM Japan, Ltd. I4405264400 · IBM Research and Development Inc. I4405285863
+#   Cleveland Clinic Abu Dhabi I4405266839 · Akron General I4210158374 · London I4210149023
+quantum_terms = ["quantum"]    # lane B: Clinic papers mentioning these in title/abstract
+skip_types = ["dataset", "software", "paratext", "peer-review", "grant",
+              "supplementary-materials", "editorial", "report", "other"]
+
+[arxiv]
+query_file = "config/arxiv_query.txt"   # the existing feed query, verbatim
+watchlist_file = "config/watchlist.csv" # copy from watchlist.example.csv
+# TODO(owner): watchlist names common enough to collide with other researchers.
+# Hits matched only by these names are marked "uncertain".
+common_names = []
+
+[matching]
+auto_link = 95                 # fuzzy title score needed to auto-link (plus author/year/number guards)
+review = 85                    # 85–95 → POSSIBLE_DUPLICATE for a person to check
+year_window = [-1, 3]          # journal year minus preprint year
+
+[master]
+path = ""                      # local path to the real master; never commit it

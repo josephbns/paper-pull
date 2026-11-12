@@ -1,0 +1,21 @@
+# Local state and outputs — internal, never commit
+data/
+out/
+config/settings.toml
+config/watchlist.csv
+.env
+
+# Any spreadsheet except synthetic fixtures
+*.xlsx
+*.xls
+*.xlsm
+!tests/fixtures/*.xlsx
+
+# Python
+.venv/
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pubmon"
+version = "0.1.0"
+description = "Finds and reconciles IBM Quantum – Cleveland Clinic collaboration publications"
+requires-python = ">=3.11"
+dependencies = [
+  "pyalex>=0.21",
+  "arxiv>=4.0",
+  "habanero>=2.9",
+  "rapidfuzz>=3.14",
+  "idutils>=1.7",
+  "sqlite-utils>=4.2",
+  "tenacity>=9.2",
+  "openpyxl>=3.1",
+  "python-dotenv>=1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9.0",
+  "pytest-recording>=0.14",
+  "ruff>=0.17",
+]
+
+[project.scripts]
+pubmon = "pubmon.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
