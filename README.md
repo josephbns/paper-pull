@@ -3,9 +3,9 @@
 A publication monitor for the IBM–Cleveland Clinic collaboration, under development.
 Final exports will have **one row per paper**, combining preprint and journal identifiers.
 
-Milestones 1–4 provide settings, models, normalization, SQLite history, source adapters,
-institution lookup, matching and change detection. Exports and the full `pubmon run` command
-are not implemented yet.
+Milestones 1–5 provide the complete run/review pipeline: public discovery, matching,
+read-only master reconciliation, one-row-per-paper exports, decisions and history.
+The back-test command and full beginner walkthrough arrive in Milestone 6.
 
 ## Development quick start (Python 3.11+)
 
@@ -162,3 +162,71 @@ Two concepts to learn:
 
 No new owner decisions block Milestone 5. Live API checks, watchlist review and institution
 scope remain outstanding as documented above.
+
+## Run and review (Milestone 5)
+
+From the repository root with the virtual environment activated, this **offline** smoke run
+uses only the supplied synthetic fixtures and leaves the real database and exports unchanged:
+
+```bash
+pubmon run --dry-run --master tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api
+```
+
+For an offline run without workbook reconciliation:
+
+```bash
+pubmon run --dry-run --no-master --fixtures tests/fixtures/api
+```
+
+`--fixtures` is explicit: it never falls back to an API. Non-dry fixture runs keep history
+and outputs under ignored `demo/`, completely separate from live `data/` and `out/`. Removing it selects live collection,
+which requires environment credentials, API access and a reviewed local watchlist. Fixture
+replay uses the fixture's latest arXiv update as its replay clock; it is not a live search.
+
+To inspect real generated synthetic outputs, omit `--dry-run` and optionally add `--xlsx`:
+
+```bash
+pubmon run --no-master --fixtures tests/fixtures/api --xlsx
+pubmon status --demo
+pubmon import-decisions --demo demo/out/your_reviewed_file.csv
+```
+
+Each candidate row contains one `work_key`, both preprint/journal identifiers when linked,
+distinct event kinds, and all field changes in its `changes` cell. Uncertain matches stay
+separate with `possible_duplicate_of`. A `works_<date>.csv` snapshot includes every paper once.
+CSV files include a UTF-8 BOM and `arXiv:` prefixes; optional Excel exports format IDs as text.
+Repeated runs on the same day append the run ID to filenames rather than overwrite prior
+review files. Existing candidate files, even if edited, are never re-saved by the application.
+
+Fill only `decision` and `reviewer_note` in a copy of the candidate CSV, then import it.
+Decisions are `accepted`, `rejected`, `not_collab`, or `merge:<target_work_key>`; invalid rows
+are reported and skipped. An approved merge preserves identifiers/history and records aliases
+so re-importing the old source key is harmless. Rejected candidates return only after a later
+material change. A merge records identity approval; it is not a counting-policy decision.
+
+Master inputs must have the documented headers and unique Pub IDs. Only approved columns are
+accessed; ID hyperlinks are read from ZIP relationships with no editable workbook handle.
+Matching uses identifiers, then authors/date for rows lacking identifiers; `Name` is display
+only. If two existing master rows represent preprint and journal versions, their Pub IDs are
+listed together on the single output row. Manual columns are never copied to outputs.
+
+Real master reconciliation and reviewer decisions remain local to an approved IBM machine.
+Development here uses only public metadata and synthetic data. All `data/` and `out/` files
+remain ignored by Git.
+
+The pipeline makes a consistent SQLite backup before a normal run. Dry runs use a temporary
+copy of history and discard their database changes, raw archives, logs and generated rows.
+Source failures are recorded as `partial` with CLI exit code 2; other sources continue.
+Failed matching rolls back its whole transaction and records a failed run separately.
+Files are renamed atomically before export markers are committed. A file-write failure leaves
+its events pending for retry; do not review output from a run reported as failed.
+
+Two engineering concepts:
+
+- **Projection:** `master.read_master()` accesses an explicit allowlist of fields.
+  The manual-column spy test fails if the reader accesses a protected data cell.
+- **Grouping:** `export.group_by_work()` retains each audit event under one paper key.
+  `candidate_rows()` converts that group to one row carrying all changes and version IDs.
+
+Live API checks remain unrun. Offline fixture/acceptance checks do not establish real-world
+recall; the Milestone 6 back-test will provide the tool for that later validation.

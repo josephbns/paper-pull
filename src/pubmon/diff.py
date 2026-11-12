@@ -60,11 +60,13 @@ def canonical_state(versions: list[Work], previous: dict | None = None) -> dict:
         for name in ("doi", "arxiv_id", "pmid", "openalex_id", "venue", "journal_ref", "authors"):
             state[name] = next(
                 (getattr(work, name) for work in ranked if getattr(work, name)),
-                (previous or {}).get(name),
+                (previous or {}).get(name, [] if name == "authors" else None),
             )
     state["ibm_confirmed"] = any(work.ibm_confirmed for work in versions) or bool(
         (previous or {}).get("ibm_confirmed")
     )
     state["confidence"] = min((work.confidence for work in versions), key=CONFIDENCE_ORDER.get)
-    state["is_retracted"] = any(work.is_retracted for work in versions)
+    state["is_retracted"] = any(work.is_retracted for work in versions) or bool(
+        (previous or {}).get("is_retracted")
+    )
     return state

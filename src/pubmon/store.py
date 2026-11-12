@@ -1,8 +1,9 @@
 """SQLite history; all writes require an explicit, atomic transaction."""
 
 import json
+import sqlite3
 from collections.abc import Iterable, Iterator, Mapping
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from pathlib import Path
 from types import TracebackType
 from typing import Any, Self
@@ -16,6 +17,8 @@ SCHEMES = frozenset({"doi", "arxiv", "pmid", "openalex"})
 
 # Keep schema creation separate from data writes. IF NOT EXISTS never replaces history.
 SCHEMA = (
+    """CREATE TABLE IF NOT EXISTS work_aliases (
+        alias TEXT PRIMARY KEY NOT NULL, work_key TEXT NOT NULL REFERENCES works(work_key))""",
     """CREATE TABLE IF NOT EXISTS works (
         work_key TEXT PRIMARY KEY NOT NULL, title TEXT, year INT, venue TEXT,
         type TEXT, status TEXT, ibm_confirmed INT, best_confidence TEXT,
@@ -149,6 +152,7 @@ class Store:
 
     def get_work(self, work_key: str) -> Row | None:
         """Return a paper summary or None if the identity is unknown."""
+        work_key = self.canonical_key(work_key)
         rows = self._rows("SELECT * FROM works WHERE work_key = ?", (work_key,))
         return rows[0] if rows else None
 
@@ -357,3 +361,57 @@ class Store:
     def list_events(self, work_key: str) -> list[Row]:
         """Read a paper's complete audit trail, including previously exported events."""
         return self._rows("SELECT * FROM events WHERE work_key = ? ORDER BY event_id", (work_key,))
+
+    def canonical_key(self, key: str) -> str:
+        """Resolve an old reviewed key after an explicitly approved merge."""
+        seen = set()
+        while key not in seen:
+            seen.add(key)
+            rows = self._rows("SELECT work_key FROM work_aliases WHERE alias = ?", (key,))
+            if not rows:
+                return key
+            key = rows[0]["work_key"]
+        raise ValueError("Cycle in work aliases")
+
+    def known_arxiv_ids(self) -> list[str]:
+        """Return all known preprints for weekly metadata refresh."""
+        return [
+            row["value"]
+            for row in self._rows(
+                "SELECT value FROM identifiers WHERE scheme = 'arxiv' ORDER BY value"
+            )
+        ]
+
+    def merge_works(self, source: str, target: str) -> None:
+        """Apply only an explicit reviewer merge, preserving references and audit history."""
+        source, target = self.canonical_key(source), self.canonical_key(target)
+        if source == target:
+            return
+        if self.get_work(source) is None or self.get_work(target) is None:
+            raise ValueError("Both merge identities must exist")
+        first = min(self.get_work(source)["first_seen"], self.get_work(target)["first_seen"])
+        self._write("UPDATE works SET first_seen = ? WHERE work_key = ?", (first, target))
+        for table in ("identifiers", "source_records", "events", "decisions", "work_aliases"):
+            self._write(f'UPDATE "{table}" SET work_key = ? WHERE work_key = ?', (target, source))
+        self._write("INSERT INTO work_aliases VALUES (?, ?)", (source, target))
+        self._write("DELETE FROM works WHERE work_key = ?", (source,))
+
+    def touch_work(self, key: str, stamp: str) -> None:
+        """Record a material correction/retraction without replacing publication metadata."""
+        self._write("UPDATE works SET last_changed = ? WHERE work_key = ?", (stamp, key))
+
+    def backup_to(self, path: Path) -> None:
+        """Create a consistent SQLite backup without copying a potentially active journal."""
+        with closing(sqlite3.connect(path)) as destination:
+            self._db.conn.backup(destination)
+
+    @staticmethod
+    def copy_database(source: Path, target: Path) -> None:
+        """Clone existing history read-only for dry runs; never initialize the original."""
+        if source.exists():
+            uri = source.resolve().as_uri() + "?mode=ro"
+            with (
+                closing(sqlite3.connect(uri, uri=True)) as original,
+                closing(sqlite3.connect(target)) as destination,
+            ):
+                original.backup(destination)

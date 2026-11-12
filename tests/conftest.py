@@ -36,3 +36,18 @@ def api_fixture():
         return json.loads(path.read_text())
 
     return read
+
+
+@pytest.fixture
+def project(tmp_path):
+    """Prepare an isolated synthetic project for end-to-end workflow tests."""
+    import shutil
+    from pathlib import Path
+
+    from pubmon.config import load_config
+
+    root = Path(__file__).resolve().parents[1]
+    (tmp_path / "config").mkdir()
+    for name in ("settings.example.toml", "arxiv_query.txt"):
+        shutil.copyfile(root / "config" / name, tmp_path / "config" / name)
+    return load_config(tmp_path)

@@ -19,3 +19,6 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
+
+# Isolated synthetic replay state and review outputs
+demo/

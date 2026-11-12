@@ -53,7 +53,15 @@ def test_schema_reopen_preserves_rows(tmp_path):
         tables = {
             row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
-    assert tables == {"works", "identifiers", "source_records", "events", "decisions", "runs"}
+    assert tables == {
+        "works",
+        "identifiers",
+        "source_records",
+        "events",
+        "decisions",
+        "runs",
+        "work_aliases",
+    }
 
 
 def test_interrupted_run_safe(tmp_path):

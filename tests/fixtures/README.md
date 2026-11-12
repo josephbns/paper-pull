@@ -40,3 +40,17 @@ Hand-written synthetic OpenAlex pages, arXiv Result-shaped JSON and Atom XML, an
 publication/notice responses. They exercise the installed libraries with mocked transports;
 none were downloaded from a live API. Real cassettes can later be recorded into
 `tests/cassettes/` using the README command. The default test run blocks network access.
+
+## Generating a new synthetic workbook
+
+```bash
+python tests/fixtures/generate_master.py /tmp/new_synthetic_master.xlsx
+```
+
+The generator refuses existing output paths. Its 11 rows cover the same kinds of cases as
+our bundled fixture; it intentionally does not reproduce the bundled workbook byte for byte.
+The application never writes either workbook.
+
+`api/crossref_updates.json` supplies synthetic correction/retraction targets for end-to-end
+notice tests. Distinct synthetic OpenAlex papers have distinct IDs; only the deliberate
+preprint/journal pair shares identity clues.

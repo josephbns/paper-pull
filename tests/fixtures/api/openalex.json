@@ -67,7 +67,7 @@
       "type": "article",
       "doi": "https://doi.org/10.5555/synthetic-2",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000002"
       },
       "authorships": [
         {
@@ -85,11 +85,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-2",
           "pdf_url": null
         }
       ],
@@ -108,7 +104,7 @@
       "type": "dataset",
       "doi": "https://doi.org/10.5555/synthetic-3",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000003"
       },
       "authorships": [
         {
@@ -140,11 +136,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-3",
           "pdf_url": null
         }
       ],
@@ -163,7 +155,7 @@
       "type": "software",
       "doi": "https://doi.org/10.5555/synthetic-4",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000004"
       },
       "authorships": [
         {
@@ -195,11 +187,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-4",
           "pdf_url": null
         }
       ],
@@ -218,7 +206,7 @@
       "type": "erratum",
       "doi": "https://doi.org/10.5555/synthetic-5",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000005"
       },
       "authorships": [
         {
@@ -250,11 +238,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-5",
           "pdf_url": null
         }
       ],
@@ -273,7 +257,7 @@
       "type": "retraction",
       "doi": "https://doi.org/10.5555/synthetic-6",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000006"
       },
       "authorships": [
         {
@@ -305,11 +289,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-6",
           "pdf_url": null
         }
       ],
@@ -328,7 +308,7 @@
       "type": "conference-abstract",
       "doi": "https://doi.org/10.5555/synthetic-7",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000007"
       },
       "authorships": [
         {
@@ -360,11 +340,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-7",
           "pdf_url": null
         }
       ],
@@ -383,7 +359,7 @@
       "type": "preprint",
       "doi": "https://doi.org/10.5555/synthetic-8",
       "ids": {
-        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99999999"
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/99000008"
       },
       "authorships": [
         {
@@ -415,11 +391,7 @@
       ],
       "locations": [
         {
-          "landing_page_url": "https://arxiv.org/abs/2401.99999v2",
-          "pdf_url": null
-        },
-        {
-          "landing_page_url": "https://doi.org/10.5555/other-version",
+          "landing_page_url": "https://doi.org/10.5555/other-version-8",
           "pdf_url": null
         }
       ],

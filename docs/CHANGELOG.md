@@ -106,3 +106,31 @@
   IDs, not live API relation coverage. CSV/Excel output acceptance remains Milestone 5.
 - No new TODO(owner) decisions. Existing institution/watchlist/API prerequisites remain open
   for live collection and do not block offline master/export implementation.
+
+## 2026-11-12 — Milestone 5
+
+- Implemented read-only master reconciliation with exact headers, an allowed-column
+  projection, identifier and guarded authors/date matching, and ZIP relationship hyperlink
+  fallback. Never opened an editable handle to the input workbook or saved it.
+- Added grouped CSV/Excel review exports and complete work snapshots. Every paper has one
+  row containing all pending eligible events/changes and both version IDs. Protected manual
+  fields are absent. Same-day review files are preserved using run-suffixed filenames.
+- Added full run, dry-run, backfill, no-master, master override, Excel, status and local
+  decision-import commands. Explicit --fixtures replay makes the entire CLI testable offline.
+- Added source collection/failure isolation, Crossref enrichment caching, raw archives,
+  consistent SQLite backups, correction/retraction linking, and run-scoped console/file logs.
+- Added approved merges with old-key aliases, retained identifiers/source records/events,
+  and idempotent review import. Rejection suppression allows only later material changes.
+- Corrected copied synthetic fixture IDs that accidentally made unrelated fixture papers
+  share identities. Added a generator that writes new synthetic workbooks only.
+- Strengthened notice caching and retained retraction status across stale source refreshes.
+  Dry runs use a disposable history copy, leaving the original database and outputs unchanged.
+- Offline acceptance checks cover all 17 named SPEC §14 cases, including one row per paper,
+  multiple changes in one row, rate limits/outages, manual-cell spying, workbook byte identity,
+  pending-event recovery and explicit merge/re-import behavior. Live API recordings remain
+  optional and unrun; full back-testing/README completion remains Milestone 6.
+- Final validation: 163 passed, 3 optional live-recording tests skipped; lint, format,
+  dependency and Git whitespace checks passed. Both explicit fixture dry-run commands
+  completed with 3 paper rows and no persistent database/output files in this checkout.
+- Isolated non-dry synthetic replay under ignored demo/ with explicit --demo status/review
+  selection, so fixture runs cannot contaminate live data/pubmon.db or live output files.

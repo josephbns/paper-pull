@@ -215,6 +215,7 @@ decisions(work_key TEXT, decision TEXT, decided_at TEXT, note TEXT)
       -- decision: accepted | rejected | not_collab | merge:<work_key>     (Zone 2)
 runs(run_id TEXT PRIMARY KEY, started_at TEXT, finished_at TEXT,
       status TEXT, counts_json TEXT)  -- per-lane counts and failures
+work_aliases(alias TEXT PRIMARY KEY, work_key TEXT REFERENCES works(work_key)) -- approved merges
 ```
 
 ## 6. Pipeline for `pubmon run`
@@ -294,8 +295,9 @@ The header row is fixed; see `docs/MASTER_COLUMNS.md` for all 36 names in order.
   `Status`, `arXiv`, `PubMed`, `DOI`, `OpenAlex ID`, `Pub ID`, `Same work as`.
 - ID cells are text. If a cell's text is only a label (`arXiv`, `PubMed`, `DOI`, `—`), read
   the ID from the cell's hyperlink target instead. In read-only mode openpyxl does not load
-  hyperlinks, so open a second, normal (non-read-only) handle **for reading hyperlinks only**.
-  Never call `save()` on either handle.
+  hyperlinks, so read sheet hyperlink attributes and ZIP relationship targets directly.
+  This avoids opening a normal workbook that would materialize manual cells; no save path
+  exists in the reader.
 - **Matching a candidate to a master row:**
   1. Any shared DOI, arXiv ID or PMID → match (`match_method = id`).
   2. Else, for rows with no IDs: ≥ 2 shared author surnames (from `IBM Authors` +
@@ -337,6 +339,9 @@ first_seen, link, decision, reviewer_note
 - Write arXiv IDs as `arXiv:2401.12340` (plain `2401.12340` becomes a number in Excel and
   loses the trailing zero). Write DOIs as plain text.
 - `decision` and `reviewer_note` are blank for the reviewer to fill in.
+- Same-day reruns retain prior review files and add the run ID to new filenames.
+- Multiple existing master version rows can be listed together in `master_pub_id` on one
+  output paper row; an ambiguous authors/date fallback does not pick an arbitrary row.
 - Optionally (`--xlsx`) also write the same rows to an `.xlsx` with ID columns formatted as
   text. This is a new file, never the master.
 
@@ -369,13 +374,18 @@ src/pubmon/
   diff.py             material_changes(old, new) -> list[Change]
   store.py            schema, transaction(), upserts, events, decisions, runs
   master.py           read_master(path) -> list[MasterRow]; match_master(...)
-  export.py           group_by_work(events) -> list[Row]; write_candidates(); write_snapshot()
+  export.py           group_by_work(events); write_candidates(); write_snapshot()
+  pipeline.py         collection, matching, notices, reconciliation and output orchestration
+  decisions.py        local decision import and explicit approved identity merges
   log.py              logging setup with run_id
 ```
 
 Commands:
 
-- `pubmon run [--dry-run] [--backfill] [--no-master] [--master PATH] [--xlsx]`
+- `pubmon run [--dry-run] [--backfill] [--no-master] [--master PATH] [--xlsx] [--fixtures PATH]`
+  `--fixtures` is explicit offline synthetic replay, never an implicit API fallback.
+  Replay history/outputs live under ignored `demo/`; `status --demo` and
+  `import-decisions --demo` select that isolated history.
   `--dry-run` does everything except committing the transaction and writing the CSV.
 - `pubmon resolve-institutions "Cleveland Clinic" "IBM"` — prints OpenAlex institution
   candidates (id, display name, ROR, country, works_count, lineage) for a person to confirm.
