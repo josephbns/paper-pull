@@ -1,32 +1,63 @@
-# pubmon settings — copy to config/settings.toml (git-ignored) and fill the TODOs.
-# Public information only. Keys and emails go in environment variables, never here.
+# One collaboration profile: copy to config/settings.toml (git-ignored).
+# Put private API keys and contact email in .env / process variables, never here.
+# Legacy separate query/watchlist files still work, but are not used by this profile.
 
-start_date = "2021-01-01"     # no lane looks earlier than this (the partnership's start)
-arxiv_window_days = 90         # weekly arXiv lane looks back this far by last-updated date
+start_date = "2021-01-01"
+arxiv_window_days = 90
+
+[collaboration]
+name = "IBM–Cleveland Clinic"
+partner_name = "Cleveland Clinic"
+partner_label = "CCF"
+ibm_name = "IBM"
+
+[storage]
+# Current CCF workspace. For another QIC, use a separate path such as workspaces/my-qic.
+workspace = "."
 
 [openalex]
-# Parent IDs, checked live 12 Nov 2026. `lineage` covers child entities (IBM Research
-# Watson/Almaden/Zurich/Haifa/Tokyo/...; Cleveland Clinic Research, Lerner College, Florida).
-ibm_institution_ids = ["I1341412227"]   # IBM (United States), ROR 05hh8d621
-cc_institution_ids = ["I1316902750"]    # Cleveland Clinic, ROR 03xjacd83
-# TODO(owner): decide on entities OUTSIDE those lineages:
-#   IBM Japan, Ltd. I4405264400 · IBM Research and Development Inc. I4405285863
-#   Cleveland Clinic Abu Dhabi I4405266839 · Akron General I4210158374 · London I4210149023
-quantum_terms = ["quantum"]    # lane B: Clinic papers mentioning these in title/abstract
+# Supplied parent IDs; validate live and decide on extra entities before production use.
+ibm_institution_ids = ["I1341412227"]
+partner_institution_ids = ["I1316902750"]
+# TODO(owner): review IBM Japan / other IBM entities and Clinic Abu Dhabi, Akron, London.
+quantum_terms = ["quantum"]
 skip_types = ["dataset", "software", "paratext", "peer-review", "grant",
               "supplementary-materials", "editorial", "report", "other"]
 
 [arxiv]
-query_file = "config/arxiv_query.txt"   # the existing feed query, verbatim
-watchlist_file = "config/watchlist.csv" # copy from watchlist.example.csv
-# TODO(owner): watchlist names common enough to collide with other researchers.
-# Hits matched only by these names are marked "uncertain".
+# Existing CCF query preserved verbatim. Replace this whole query for another QIC.
+query = '''
+( au:"Kenneth Merz" OR au:"Kenneth M Merz" OR au:"Feixiong Cheng" OR au:"Vijay Krishna" OR au:"Daniel Blankenberg" OR au:"Bryan Raubenolt" OR au:"Fabio Cumbo" OR au:"Jayadev Joshi" OR au:"Frank DiFilippo" OR au:"Jun Qin" OR au:"Akhil Shajan" OR au:"Danil Kaliakin" OR au:"Fangchun Liang" OR au:"Subhamoy Bhowmik" OR au:"Susanta Das" OR au:"Sergii Strelchuk" OR all:"Cleveland Clinic" OR all:ibm_cleveland ) AND ( cat:quant-ph OR all:"quantum computing" OR all:"quantum computer" OR all:"quantum computers" OR all:"quantum hardware" OR all:"quantum processor" OR all:"quantum processors" OR all:"quantum circuit" OR all:"quantum circuits" OR all:"quantum algorithm" OR all:"quantum algorithms" OR all:"quantum machine learning" OR all:"quantum-centric" OR all:Qiskit OR all:qubit OR all:qubits )
+'''
+
+# Public names from the original feed. Add only confirmed public IBM/partner authors.
+# side is IBM or PARTNER; arxiv_name may differ from the display name.
+# TODO(owner): add IBM-side names and review collision-prone names below.
 common_names = []
+watchlist = [
+    { name = "Kenneth Merz", side = "PARTNER", arxiv_name = "Kenneth Merz" },
+    { name = "Kenneth Merz", side = "PARTNER", arxiv_name = "Kenneth M Merz" },
+    { name = "Feixiong Cheng", side = "PARTNER", arxiv_name = "Feixiong Cheng" },
+    { name = "Vijay Krishna", side = "PARTNER", arxiv_name = "Vijay Krishna" },
+    { name = "Daniel Blankenberg", side = "PARTNER", arxiv_name = "Daniel Blankenberg" },
+    { name = "Bryan Raubenolt", side = "PARTNER", arxiv_name = "Bryan Raubenolt" },
+    { name = "Fabio Cumbo", side = "PARTNER", arxiv_name = "Fabio Cumbo" },
+    { name = "Jayadev Joshi", side = "PARTNER", arxiv_name = "Jayadev Joshi" },
+    { name = "Frank DiFilippo", side = "PARTNER", arxiv_name = "Frank DiFilippo" },
+    { name = "Jun Qin", side = "PARTNER", arxiv_name = "Jun Qin" },
+    { name = "Akhil Shajan", side = "PARTNER", arxiv_name = "Akhil Shajan" },
+    { name = "Danil Kaliakin", side = "PARTNER", arxiv_name = "Danil Kaliakin" },
+    { name = "Fangchun Liang", side = "PARTNER", arxiv_name = "Fangchun Liang" },
+    { name = "Subhamoy Bhowmik", side = "PARTNER", arxiv_name = "Subhamoy Bhowmik" },
+    { name = "Susanta Das", side = "PARTNER", arxiv_name = "Susanta Das" },
+    { name = "Sergii Strelchuk", side = "PARTNER", arxiv_name = "Sergii Strelchuk" },
+]
 
 [matching]
-auto_link = 95                 # fuzzy title score needed to auto-link (plus author/year/number guards)
-review = 85                    # 85–95 → POSSIBLE_DUPLICATE for a person to check
-year_window = [-1, 3]          # journal year minus preprint year
+auto_link = 95
+review = 85
+year_window = [-1, 3]
 
 [master]
-path = ""                      # local path to the real master; never commit it
+# The current approved workbook template is still required for every partner.
+path = ""

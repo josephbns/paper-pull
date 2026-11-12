@@ -105,44 +105,47 @@ verified as applied. Review/save them in environment settings and publish the up
 configuration when ready. Do not paste a key into chat. Live validation was deferred by the
 owner until mailbox/account setup is available.
 
-## 4. Prepare your local settings and watchlist
+## 4. Personalize the collaboration in one profile
 
-Copy the public templates only if local files do not already exist:
+Copy the complete profile if it does not already exist:
 
 ```powershell
 if (!(Test-Path config/settings.toml)) { Copy-Item config/settings.example.toml config/settings.toml }
-if (!(Test-Path config/watchlist.csv)) { Copy-Item config/watchlist.example.csv config/watchlist.csv }
+notepad config/settings.toml
 ```
 
-Open `config/settings.toml` in a text editor. It holds the start date, institution IDs,
-matching thresholds, query/watchlist paths and optional master path. Edit the existing
-`[master]` section rather than adding a duplicate section. Credentials stay in
-process variables or `.env`. For a Windows master path, a TOML literal string avoids
-backslash escaping:
+This one file holds names, IBM/partner institution IDs, dates, keywords, the complete arXiv
+query, author watchlist, matching thresholds, workspace and master path. The new CCF profile
+needs no separate watchlist CSV or query-file edit. Private keys/contact email stay in `.env`
+or environment variables; [the customization guide](docs/CUSTOMIZATION.md) shows both files.
+
+For another QIC, replace the partner details, verified IDs, query and public authors, and
+choose a fresh `storage.workspace` such as `workspaces/my-qic` to keep its history/reviews
+separate. Existing CCF history stays at the default workspace `"."`. `status`, decision import
+and back-testing follow the workspace automatically. Do not mix another QIC into CCF's database.
+
+Edit the existing `[master]` section for a Windows master path:
 
 ```toml
 [master]
 path = 'C:\Research\Publications_Master.xlsx'
 ```
 
-Keep the real workbook outside the checkout, on your approved machine. Paths in settings
-are relative to the project directory unless absolute. `--master` overrides the configured
-path; `--no-master` explicitly skips workbook reconciliation.
+Keep the real workbook outside the checkout on your approved machine. `--master` overrides
+this path; `--no-master` skips reconciliation. All profiles currently require the same
+approved workbook column layout; arbitrary QIC spreadsheet layouts are not implemented.
 
-The institution IDs in the template come from the build pack. Confirm their scope with:
+The template's institution IDs come from the build pack. Use profile names for lookup:
 
 ```powershell
-pubmon resolve-institutions "Cleveland Clinic" "IBM"
+pubmon resolve-institutions
 ```
 
-This prints candidates with IDs, ROR, country, work counts and lineage. It never edits
-settings automatically. Decide whether the additional IBM/Clinic entities listed in the
-settings TODO belong; do not guess replacement IDs.
-
-Review `config/watchlist.csv`: columns are `name,side,orcid,arxiv_name`, with side `IBM` or
-`CC`. The example has Clinic-side names; add approved public IBM-side author names to enable
-IBM confirmation on arXiv. Put collision-prone names in `arxiv.common_names` in settings.
-The existing query in `config/arxiv_query.txt` is used verbatim.
+This prints candidates and never edits settings. Confirm institution scope before production.
+Add only confirmed public authors with side `IBM` or `PARTNER` in `[arxiv].watchlist`, and put
+collision-prone names in `common_names`. The current example has partner-side names only;
+IBM-side names remain an owner TODO. The inline query is preserved verbatim, not regenerated.
+Legacy separate query/watchlist files remain supported when explicitly referenced.
 
 ## 5. Run the first live backfill
 
@@ -274,6 +277,7 @@ Never commit real workbooks, raw/live history, review decisions or notes, genera
 keys or contact emails. `.gitignore` covers `.env`, local settings/watchlists, `data/`, `out/`,
 `demo/`, and spreadsheets except synthetic fixtures. Check `git status --short` before a commit.
 Use only public or synthetic fixtures in this repository and in cloud development.
+Optional `workspaces/` runtime directories are also ignored.
 
 ## Troubleshooting
 

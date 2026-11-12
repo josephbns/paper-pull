@@ -291,3 +291,33 @@ def test_malformed_failed_lane_still_allows_other_sources(project, monkeypatch):
     monkeypatch.setattr(sources, "_replay", malformed)
     result = pipeline.run(project, no_master=True, fixtures=FIXTURES)
     assert result["status"] == "partial" and result["papers"] == 3
+
+
+def test_custom_partner_workspaces_keep_history_and_cli_separate(project, capsys):
+    from dataclasses import replace
+
+    first = replace(
+        project,
+        collaboration_name="Synthetic QIC A",
+        partner_label="QIC A",
+        workspace_dir=project.project_dir / "workspaces/a",
+    )
+    second = replace(
+        project,
+        collaboration_name="Synthetic QIC B",
+        partner_label="QIC B",
+        workspace_dir=project.project_dir / "workspaces/b",
+    )
+    one = pipeline.run(first, no_master=True, fixtures=FIXTURES)
+    two = pipeline.run(second, no_master=True, fixtures=FIXTURES)
+    assert one["collaboration"] == "Synthetic QIC A" and two["partner"] == "QIC B"
+    assert one["candidates"] == two["candidates"] == 3
+    assert (project.project_dir / "workspaces/a/demo/data/pubmon.db").exists()
+    assert (project.project_dir / "workspaces/b/demo/data/pubmon.db").exists()
+    assert not (project.project_dir / "demo").exists()
+    assert pipeline.run(first, no_master=True, fixtures=FIXTURES)["candidates"] == 0
+    local = project.project_dir / "config/settings.toml"
+    template = (project.project_dir / "config/settings.example.toml").read_text()
+    local.write_text(template.replace('workspace = "."', 'workspace = "workspaces/a"'))
+    assert cli.main(["--project-dir", str(project.project_dir), "status", "--demo"]) == 0
+    assert len(json.loads(capsys.readouterr().out)) == 2

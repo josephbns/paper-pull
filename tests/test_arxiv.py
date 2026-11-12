@@ -210,3 +210,27 @@ def test_arxiv_persistent_failure_is_a_lane_failure(monkeypatch, source_settings
     with pytest.raises(LaneFailed, match="HTTP 503"):
         arxiv_src.recheck(source_settings, ["2401.99999"], watchlist=[], client=client)
     assert len(calls) == 4  # Initial attempt plus arxiv.py's three retries.
+
+
+def test_feed_uses_inline_profile_watchlist(source_settings, api_fixture):
+    from pubmon.config import WatchAuthor
+
+    settings = replace(
+        source_settings,
+        watchlist=(WatchAuthor("Synthetic IBM Author", "IBM", "Synthetic IBM Author"),),
+        watchlist_file=source_settings.project_dir / "nonexistent-watchlist.csv",
+    )
+    client = SimpleNamespace(results=lambda _: iter(results(api_fixture)[:1]))
+    work = arxiv_src.fetch_feed(settings, today=date(2026, 11, 12), client=client)[0]
+    assert work.ibm_confirmed and work.matched_names == ["Synthetic IBM Author"]
+
+
+def test_empty_inline_watchlist_does_not_require_a_csv(source_settings, api_fixture):
+    settings = replace(
+        source_settings,
+        watchlist=(),
+        watchlist_file=source_settings.project_dir / "missing-watchlist.csv",
+    )
+    client = SimpleNamespace(results=lambda _: iter(results(api_fixture)[:1]))
+    work = arxiv_src.fetch_feed(settings, today=date(2026, 11, 12), client=client)[0]
+    assert not work.ibm_confirmed and work.matched_names == []

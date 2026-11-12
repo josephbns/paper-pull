@@ -46,10 +46,10 @@ def fetch_pair(settings: Settings, *, report: FetchReport | None = None) -> list
     _configure(settings)
     report = report if report is not None else FetchReport()
     with lane_guard(Lane.PAIR, report):
-        if not settings.ibm_institution_ids or not settings.cc_institution_ids:
+        if not settings.ibm_institution_ids or not settings.partner_institution_ids:
             raise LaneFailed(Lane.PAIR, "Both institution lists must be configured")
         records = {}
-        for ibm, clinic in product(settings.ibm_institution_ids, settings.cc_institution_ids):
+        for ibm, clinic in product(settings.ibm_institution_ids, settings.partner_institution_ids):
             query = Works().filter(authorships={"institutions": {"lineage": [ibm, clinic]}})
             query = query.filter(from_publication_date=settings.start_date)
             records.update((item["id"], item) for item in _pages(query, Lane.PAIR))
@@ -65,10 +65,10 @@ def fetch_clinic_quantum(
     _configure(settings)
     report = report if report is not None else FetchReport()
     with lane_guard(Lane.CLINIC_QUANTUM, report):
-        if not settings.cc_institution_ids or not settings.quantum_terms:
+        if not settings.partner_institution_ids or not settings.quantum_terms:
             raise LaneFailed(Lane.CLINIC_QUANTUM, "Clinic institutions and terms are required")
         records = {}
-        for clinic in settings.cc_institution_ids:
+        for clinic in settings.partner_institution_ids:
             query = Works().filter(authorships={"institutions": {"lineage": clinic}})
             # TODO(owner): verify this filter live before the first collection run.
             query = query.search_filter(title_and_abstract=" OR ".join(settings.quantum_terms))

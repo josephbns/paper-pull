@@ -24,7 +24,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-dir", default=".", help="Project directory containing config/")
     commands = parser.add_subparsers(dest="command")
     lookup = commands.add_parser("resolve-institutions", help="List public institution candidates")
-    lookup.add_argument("names", nargs="+")
+    lookup.add_argument("names", nargs="*", help="Defaults to the profile partner and IBM names")
     execute = commands.add_parser("run", help="Fetch, reconcile and export one row per paper")
     for option in ("dry-run", "backfill", "xlsx"):
         execute.add_argument("--" + option, action="store_true")
@@ -76,7 +76,9 @@ def _dispatch(args: argparse.Namespace) -> int:
     settings = load_config(args.project_dir)
     root = settings.project_dir
     if args.command == "resolve-institutions":
-        _lookup(lookup_institutions(settings, args.names))
+        _lookup(
+            lookup_institutions(settings, args.names or [settings.partner_name, settings.ibm_name])
+        )
         return 0
     if args.command == "run":
         result = run(
@@ -90,7 +92,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         )
         print(json.dumps(result))
         return 2 if result["status"] == "partial" else 0
-    state_root = root / "demo" if args.demo else root
+    state_root = settings.workspace_dir or root
+    state_root = state_root / "demo" if args.demo else state_root
     database = state_root / "data/pubmon.db"
     if args.command == "backtest":
         print(

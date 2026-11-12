@@ -183,3 +183,14 @@ def test_repeated_cursor_fails_instead_of_looping(monkeypatch, source_settings, 
     transport(monkeypatch, [payload, payload])
     with pytest.raises(LaneFailed, match="repeated a cursor"):
         openalex.fetch_pair(source_settings)
+
+
+def test_query_uses_configured_partner_institutions(monkeypatch, source_settings, api_fixture):
+    settings = replace(
+        source_settings, cc_institution_ids=("I999777",), partner_name="Synthetic QIC"
+    )
+    urls = transport(monkeypatch, [api_fixture("openalex.json")])
+    openalex.fetch_clinic_quantum(settings)
+    query = parse_qs(urlsplit(urls[0]).query)
+    assert "authorships.institutions.lineage:I999777" in query["filter"][0]
+    assert "I1316902750" not in query["filter"][0]

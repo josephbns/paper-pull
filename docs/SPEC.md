@@ -414,40 +414,24 @@ Commands:
 
 ## 13. Configuration
 
-`config/settings.toml` (copy from `settings.example.toml`; contains public info only):
+`config/settings.toml` is the single collaboration profile. Copy the complete public CCF
+starting template from `config/settings.example.toml`; see `docs/CUSTOMIZATION.md`.
 
-```toml
-start_date = "2021-01-01"
-arxiv_window_days = 90
+- `[collaboration]`: names and labels (`name`, `partner_name`, `partner_label`, `ibm_name`).
+- `[storage].workspace`: runtime history/output root, initially `"."` for CCF. Select a fresh
+  workspace for a different QIC; configuration and master relative paths stay project-relative.
+- `[openalex]`: `ibm_institution_ids`, generic `partner_institution_ids`, terms and skipped types.
+- `[arxiv]`: inline `query`, inline `watchlist` author tables, and `common_names`.
+- Top-level dates, `[matching]` thresholds and `[master].path` retain their existing meanings.
+- Private API key and contact email come from `OPENALEX_API_KEY` / `PUBMON_EMAIL`, optionally
+  in ignored `.env`. No real values enter the public template.
 
-[openalex]
-# Parent IDs, checked live 12 Nov 2026. `lineage` covers child entities (e.g. IBM Research
-# Watson/Almaden/Zurich/Haifa/Tokyo; Cleveland Clinic Research, Lerner College, Florida).
-ibm_institution_ids = ["I1341412227"]   # IBM (United States), ROR 05hh8d621
-cc_institution_ids  = ["I1316902750"]   # Cleveland Clinic, ROR 03xjacd83
-# TODO(owner): decide on entities OUTSIDE those lineages:
-#   IBM Japan, Ltd. I4405264400 · IBM Research and Development Inc. I4405285863
-#   Cleveland Clinic Abu Dhabi I4405266839 · Akron General I4210158374 · London I4210149023
-quantum_terms = ["quantum"]
-skip_types = ["dataset", "software", "paratext", "peer-review", "grant",
-              "supplementary-materials", "editorial", "report", "other"]
-
-[arxiv]
-query_file = "config/arxiv_query.txt"
-common_names = []          # TODO(owner): names that collide with other researchers
-
-[matching]
-auto_link = 95
-review = 85
-year_window = [-1, 3]
-
-[master]
-path = ""                  # local path to the real master; never committed
-```
-
-`config/watchlist.csv` columns: `name, side (IBM|CC), orcid, arxiv_name`.
-
-Environment: `OPENALEX_API_KEY`, `PUBMON_EMAIL`.
+Legacy `cc_institution_ids`, `query_file`, `watchlist_file` and side `CC` are supported.
+Do not specify inline query/watchlist and its file reference together. The query is never
+regenerated from names. The stable `clinic_quantum` history lane now uses generic configured
+partner IDs. Changing a profile does not clear history, so use separate QIC workspaces.
+Workbook reconciliation remains tied to the current approved header template; supporting
+another workbook layout requires a reviewed field mapping rather than guessing columns.
 
 ## 14. Acceptance tests (all must pass offline)
 

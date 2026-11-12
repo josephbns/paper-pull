@@ -22,3 +22,6 @@ dist/
 
 # Isolated synthetic replay state and review outputs
 demo/
+
+# Optional separate runtime workspaces for other QICs
+workspaces/

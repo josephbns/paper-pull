@@ -73,3 +73,17 @@ def test_missing_openalex_credentials_fail_without_fetch(monkeypatch, caplog, tm
     monkeypatch.delenv("PUBMON_EMAIL", raising=False)
     assert cli.main(["--project-dir", str(tmp_path), "resolve-institutions", "IBM"]) == 1
     assert "Missing environment variables" in caplog.text
+
+
+def test_institution_lookup_defaults_to_profile_names(source_settings, monkeypatch):
+    calls = []
+
+    def lookup(settings, names):
+        calls.append(names)
+        return []
+
+    monkeypatch.setattr(cli, "lookup_institutions", lookup)
+    assert (
+        cli.main(["--project-dir", str(source_settings.project_dir), "resolve-institutions"]) == 0
+    )
+    assert calls == [[source_settings.partner_name, source_settings.ibm_name]]

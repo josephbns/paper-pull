@@ -1,26 +1,15 @@
 """arXiv feed discovery and known-identifier rechecks using arxiv.py."""
 
 import csv
-from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import arxiv
 
-from pubmon.config import Settings
+from pubmon.config import Settings, WatchAuthor, watch_author
 from pubmon.models import Author, Confidence, Lane, Source, Work, WorkType
 from pubmon.normalize import normalize_ids, normalize_title
 from pubmon.sources.common import FetchReport, LaneFailed, Raw, lane_guard, raw_hash
-
-
-@dataclass(frozen=True)
-class WatchAuthor:
-    """An owner-supplied public author name and collaboration side."""
-
-    name: str
-    side: str
-    arxiv_name: str
-    orcid: str | None = None
 
 
 def read_watchlist(path: Path) -> list[WatchAuthor]:
@@ -36,16 +25,12 @@ def read_watchlist(path: Path) -> list[WatchAuthor]:
             raise LaneFailed(Lane.ARXIV_FEED, "Watchlist headers are missing")
         authors = []
         for row in reader:
-            if not row["name"].strip() or row["side"] not in {"IBM", "CC"}:
-                raise LaneFailed(Lane.ARXIV_FEED, "Watchlist requires names and IBM/CC sides")
-            authors.append(
-                WatchAuthor(
-                    name=row["name"].strip(),
-                    side=row["side"],
-                    arxiv_name=row["arxiv_name"].strip() or row["name"].strip(),
-                    orcid=row["orcid"].strip() or None,
-                )
-            )
+            try:
+                authors.append(watch_author(row))
+            except ValueError:
+                raise LaneFailed(
+                    Lane.ARXIV_FEED, "Watchlist requires names and IBM/CC or PARTNER sides"
+                ) from None
         return authors
 
 
@@ -65,7 +50,7 @@ def fetch_feed(
     """Discover recent updates or backfill by submission date, keeping uncertain hits."""
     report = report if report is not None else FetchReport()
     with lane_guard(Lane.ARXIV_FEED, report):
-        watchlist = read_watchlist(settings.watchlist_file) if watchlist is None else watchlist
+        watchlist = _configured_watchlist(settings) if watchlist is None else watchlist
         cutoff = (today or datetime.now(UTC).date()) - timedelta(days=settings.arxiv_window_days)
         start = date.fromisoformat(settings.start_date)
         # Publication dates are not monotonic when sorted by update time.
@@ -105,7 +90,7 @@ def recheck(
         unique = sorted({normalize_ids(arxiv_id=value)["arxiv_id"] for value in ids})
         if not unique:
             return []
-        watchlist = read_watchlist(settings.watchlist_file) if watchlist is None else watchlist
+        watchlist = _configured_watchlist(settings) if watchlist is None else watchlist
         client = client or _client()
         works = {}
         for offset in range(0, len(unique), 100):
@@ -181,3 +166,9 @@ def _to_work(raw: Raw, settings: Settings, lane: Lane, watchlist: list[WatchAuth
         raw_hash=raw_hash(raw),
         **ids,
     )
+
+
+def _configured_watchlist(settings: Settings) -> list[WatchAuthor]:
+    if settings.watchlist is not None:
+        return list(settings.watchlist)
+    return read_watchlist(settings.watchlist_file)

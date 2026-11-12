@@ -160,3 +160,21 @@
 - No new TODO(owner) decisions. Live API configuration/queries, institution/watchlist review,
   real-master recall and two weekly validation runs remain outstanding. The owner deferred
   live account/mailbox setup; no live requests were made during this milestone.
+
+## 2026-11-12 — Consolidated partner customization
+
+- Made config/settings.toml the complete collaboration profile, with public CCF defaults for
+  names/labels, institution IDs, dates, keywords, inline query/watchlist, matching, workspace
+  and master path. The proven CCF query and 16 public feed entries were preserved.
+- Kept secrets/contact email in .env/environment bindings; configured the owner's supplied
+  contact privately without putting the address or a key into tracked files.
+- Added generic partner institution lookup and IBM/PARTNER watchlist sides. Legacy CC IDs,
+  query/watchlist files and CSV side CC remain supported; contradictory inputs fail clearly.
+- Added configurable runtime workspaces so different QICs can keep separate histories,
+  outputs and reviews. Default CCF storage remains unchanged; CLI status/import/back-test
+  follow the profile workspace. The existing approved workbook layout is still required.
+- Added docs/CUSTOMIZATION.md and updated README/spec/security guidance. No new dependencies,
+  institution IDs or author guesses were introduced. Live API validation remains deferred.
+- Validation: 188 offline tests passed, 3 optional live-recording tests skipped; lint,
+  formatting, dependency checks and a complete CCF fixture dry-run passed. Both local private
+  files are git-ignored; the supplied contact value is excluded from the staged changes.

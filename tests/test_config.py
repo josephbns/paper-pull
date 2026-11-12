@@ -89,3 +89,65 @@ def test_bad_configuration_is_actionable(project, before, after):
 def test_explicit_missing_file_does_not_fall_back(project):
     with pytest.raises(FileNotFoundError):
         load_config(project, path="missing.toml")
+
+
+def test_profile_contains_ccf_query_and_watchlist_without_extra_files(project):
+    (project / "config/arxiv_query.txt").unlink()
+    settings = load_config(project)
+    assert settings.collaboration_name == "IBM–Cleveland Clinic"
+    assert settings.partner_name == "Cleveland Clinic" and settings.partner_label == "CCF"
+    assert settings.partner_institution_ids == ("I1316902750",)
+    assert 'all:"Cleveland Clinic"' in settings.read_arxiv_query()
+    assert len(settings.watchlist) == 16
+    assert all(author.side == "PARTNER" for author in settings.watchlist)
+    assert settings.workspace_dir == project
+
+
+def test_profile_watchlist_is_immutable(project):
+    settings = load_config(project)
+    assert isinstance(settings.watchlist, tuple)
+    with pytest.raises(FrozenInstanceError):
+        settings.watchlist[0].name = "Different synthetic author"
+
+
+def test_legacy_separate_query_and_watchlist_config_still_loads(project):
+    import re
+
+    path = project / "config/settings.example.toml"
+    text = path.read_text().replace("partner_institution_ids", "cc_institution_ids")
+    text = re.sub(
+        r"query = '''.*?'''", 'query_file = "config/arxiv_query.txt"', text, flags=re.DOTALL
+    )
+    text = re.sub(
+        r"watchlist = \[\n.*?\n\]", 'watchlist_file = "config/watchlist.csv"', text, flags=re.DOTALL
+    )
+    path.write_text(text)
+    settings = load_config(project)
+    assert settings.arxiv_query is None and settings.watchlist is None
+    assert settings.read_arxiv_query() == (project / "config/arxiv_query.txt").read_text()
+    assert settings.cc_institution_ids == settings.partner_institution_ids
+
+
+@pytest.mark.parametrize(
+    "before,after",
+    [
+        ('partner_label = "CCF"', 'partner_label = ""'),
+        ('workspace = "."', 'workspace = ""'),
+        ('side = "PARTNER"', 'side = "UNKNOWN"'),
+        ("query =", 'query_file = "legacy.txt"\nquery ='),
+        ("watchlist = [", 'watchlist_file = "legacy.csv"\nwatchlist = ['),
+    ],
+)
+def test_invalid_or_ambiguous_profile_is_reported(project, before, after):
+    path = project / "config/settings.example.toml"
+    path.write_text(path.read_text().replace(before, after, 1))
+    with pytest.raises(ValueError, match="Invalid settings"):
+        load_config(project)
+
+
+def test_wrong_profile_section_type_is_actionable(project):
+    path = project / "config/settings.example.toml"
+    text = path.read_text().replace("[storage]", "[unused]")
+    path.write_text("storage = 3\n" + text)
+    with pytest.raises(ValueError, match="storage must be a TOML table"):
+        load_config(project)

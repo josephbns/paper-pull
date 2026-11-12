@@ -73,3 +73,16 @@ Tests named below live in [test_match](../tests/test_match.py),
 - On the approved owner machine: perform the real backfill/back-test, explain misses, compare
   current feeds, and observe two weekly runs with no repeats or wrong merges before advancing
   to V2. A report below 90% still completes; the human validation gate remains unmet.
+
+## Configurable partner profiles
+
+The subsequent customization update consolidates partner personalization in
+`config/settings.toml`: labels, IBM/partner IDs, dates, inline arXiv query/watchlist, thresholds,
+workspace and master path. Private key/contact values stay in ignored `.env` or environment
+bindings. `docs/CUSTOMIZATION.md` describes migration and the current workbook-layout limit.
+
+`test_profile_contains_ccf_query_and_watchlist_without_extra_files`,
+`test_legacy_separate_query_and_watchlist_config_still_loads`,
+`test_feed_uses_inline_profile_watchlist`, `test_query_uses_configured_partner_institutions`,
+and `test_custom_partner_workspaces_keep_history_and_cli_separate` cover this behavior.
+These checks do not validate a future QIC's real institution scope or custom spreadsheet.

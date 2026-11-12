@@ -211,7 +211,7 @@ def run(
     if not no_master and master_path is None:
         raise ValueError("Configure a master path, pass --master, or select --no-master")
     master = [] if no_master else read_master(master_path)
-    root = settings.project_dir
+    root = settings.workspace_dir or settings.project_dir
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ")
     state_root = root / "demo" if fixtures else root
     database = state_root / "data/pubmon.db"
@@ -281,6 +281,8 @@ def _execute(
             "status": status,
             "dry_run": dry_run,
             "fixture_replay": fixtures is not None,
+            "collaboration": settings.collaboration_name,
+            "partner": settings.partner_label,
             **output,
         }
     except Exception:
