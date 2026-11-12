@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
+from pubmon.backtest import run_backtest
 from pubmon.config import load_config
 from pubmon.decisions import import_decisions
 from pubmon.pipeline import run
@@ -40,6 +41,16 @@ def _parser() -> argparse.ArgumentParser:
     )
     status = commands.add_parser("status", help="Show the last ten runs")
     status.add_argument("--demo", action="store_true", help="Use isolated synthetic replay history")
+    backtest = commands.add_parser(
+        "backtest", help="Compare stored history with the master, read-only"
+    )
+    backtest.add_argument("--master", type=Path, required=True)
+    backtest.add_argument(
+        "--since", default="2023-01-01", help="Inclusive publication cutoff (YYYY-MM-DD)"
+    )
+    backtest.add_argument(
+        "--demo", action="store_true", help="Use isolated synthetic replay history"
+    )
     return parser
 
 
@@ -79,7 +90,15 @@ def _dispatch(args: argparse.Namespace) -> int:
         )
         print(json.dumps(result))
         return 2 if result["status"] == "partial" else 0
-    database = (root / "demo" if args.demo else root) / "data/pubmon.db"
+    state_root = root / "demo" if args.demo else root
+    database = state_root / "data/pubmon.db"
+    if args.command == "backtest":
+        print(
+            json.dumps(
+                run_backtest(database, root / args.master, state_root / "out", since=args.since)
+            )
+        )
+        return 0
     if not database.exists():
         if args.command == "status":
             print("[]")

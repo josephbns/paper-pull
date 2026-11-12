@@ -1,6 +1,6 @@
 # pubmon V1 — technical specification
 
-Status: ready to build · Owner: Joe · Last updated: 2026-11-12
+Status: V1 implemented; live validation pending · Owner: Joe · Last updated: 2026-11-12
 
 V1 is one command, `pubmon run`, that pulls candidate papers from OpenAlex and arXiv,
 enriches them by DOI from Crossref, matches them against its own history and the master
@@ -377,6 +377,7 @@ src/pubmon/
   export.py           group_by_work(events); write_candidates(); write_snapshot()
   pipeline.py         collection, matching, notices, reconciliation and output orchestration
   decisions.py        local decision import and explicit approved identity merges
+  backtest.py         read-only history/master recall report
   log.py              logging setup with run_id
 ```
 
@@ -393,10 +394,15 @@ Commands:
   covers them through `lineage`.
 - `pubmon import-decisions <reviewed.csv>`
 - `pubmon status` — last 10 runs with status and counts.
-- `pubmon backtest --master PATH [--since 2023-01-01]` — after a backfill, reports which
+- `pubmon backtest --master PATH [--since 2023-01-01] [--demo]` — after a backfill, reports which
   master rows of type journal article, preprint or review (status Published or Accepted) are in
   the database, matched by IDs then authors+date. Prints recall, lists misses by Pub ID, and
-  writes `out/backtest_<date>.csv`. Read-only on the master.
+  writes `out/backtest_<date>.csv`. Read-only on both master and history; no API calls.
+  The report includes eligible/matched/missing/ambiguous rows and explicit exclusions for
+  unsupported types/statuses, missing dates and dates before the inclusive cutoff. Recall is
+  tracker-row recall, so two legacy version rows may match one paper; it is not an official
+  publication total. Empty eligible scope yields null recall. `--demo` uses isolated replay
+  history/output paths, and existing reports are never overwritten.
 
 ## 12. Errors, retries, logging
 

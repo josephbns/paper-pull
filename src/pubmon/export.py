@@ -205,12 +205,12 @@ def _write_csv(path: Path, rows: list[dict], columns: list[str]) -> None:
 
 def write_candidates(rows: list[dict], path: Path) -> None:
     """Write BOM CSV atomically; a failed rename leaves events pending for retry."""
-    _atomic(path, lambda temporary: _write_csv(temporary, rows, COLUMNS))
+    write_table(rows, path, COLUMNS)
 
 
 def write_snapshot(rows: list[dict], path: Path) -> None:
     """Write a separate full-paper snapshot without altering a reviewed candidate file."""
-    _atomic(path, lambda temporary: _write_csv(temporary, rows, SNAPSHOT_COLUMNS))
+    write_table(rows, path, SNAPSHOT_COLUMNS)
 
 
 def write_xlsx(rows: list[dict], path: Path) -> None:
@@ -233,3 +233,8 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
         workbook.close()
 
     _atomic(path, write)
+
+
+def write_table(rows: list[dict], path: Path, columns: list[str]) -> None:
+    """Write a named-column BOM CSV atomically without replacing an existing report."""
+    _atomic(path, lambda temporary: _write_csv(temporary, rows, columns))

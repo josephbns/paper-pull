@@ -1,6 +1,6 @@
 # pubmon — work plan
 
-V1 is built in six Codex sessions, one milestone each, then checked with a back-test against the real master on an IBM machine. Later versions add automation (V2), smarter discovery (V3) and controlled master integration (V4), each behind a written gate.
+All six V1 implementation milestones are complete and checked offline. Live API validation and the back-test against the real master on an approved IBM machine are still pending. Later versions add automation (V2), smarter discovery (V3) and controlled master integration (V4), each behind a written gate. See README.md for the current workflow and docs/V1_REVIEW.md for evidence.
 
 ## V1 build milestones
 
@@ -24,7 +24,11 @@ Prompts for each session are in `CODEX_PROMPT.md`.
 5. `pubmon backtest --master <path> --since 2023-01-01`. This is the V1 gate below.
 6. Run weekly for two weeks; confirm zero repeat candidates.
 
-## Where to build this week (no GitHub)
+## Historical hosting guidance (superseded)
+
+The owner authorized personal GitHub (`josephbns/paper-pull`). The historical restrictions on
+using that code repository below no longer apply; internal-data location restrictions remain.
+The README is the current setup guide.
 
 Codex **cloud** tasks check out a GitHub repository, so they can't run until this project lives in one. Until then:
 
@@ -91,7 +95,7 @@ The most dangerous failure is the silent one: a paper the system never finds, be
 | Local Windows (Task Scheduler) on your IBM laptop | No (laptop must be on; set "run as soon as possible after a missed start") | Free | Best: all data stays on an IBM-managed device | V1, and Zone 2 permanently |
 | Codex cloud | Not a scheduler; needs a github.com repository | Included in your plan | Agent internet is off by default; setup scripts can still install packages. If you turn it on, allow only the API domains and GET-only methods ([Codex docs](https://learn.chatgpt.com/docs/cloud/internet-access)). Never upload the master. | Building and testing with synthetic data |
 | GitHub Actions, private repo | Yes | Personal free plan includes $12/month of compute, about 2,000 Linux minutes; public repos are free ([GitHub billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions)) | Public metadata only (Zone 1), and only after approval. Runs can be delayed or dropped at busy times; public repos auto-disable schedules after 60 idle days ([GitHub docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows)) | V2 Zone 1 |
-| IBM's GitHub (temporarily down as of 12 Nov 2026) | Yes | Already paid for | IBM's own platform, so the cleanest approval path for code and state. Check whether Codex can connect to it; if not, run Codex locally on a clone | V2 home. Until it's back, keep the code local and skip a personal repo |
+| IBM's GitHub (temporarily down as of 12 Nov 2026) | Yes | Already paid for | IBM's own platform, so the cleanest approval path for code and state. Check whether Codex can connect to it; if not, run Codex locally on a clone | V2 home if available; V1 code uses the owner-authorized personal repository |
 
 ### What may go where
 

@@ -1,232 +1,293 @@
-# pubmon
+# pubmon — publication monitor
 
-A publication monitor for the IBM–Cleveland Clinic collaboration, under development.
-Final exports will have **one row per paper**, combining preprint and journal identifiers.
+`pubmon` finds public scientific papers connected to the IBM–Cleveland Clinic collaboration,
+links preprints to journal versions, and exports **one row per paper** for human review.
+Several changes to a paper stay on that same row. Uncertain matches remain separate and flagged.
+The application never updates your master workbook or copies its manual decision columns.
 
-Milestones 1–5 provide the complete run/review pipeline: public discovery, matching,
-read-only master reconciliation, one-row-per-paper exports, decisions and history.
-The back-test command and full beginner walkthrough arrive in Milestone 6.
+The six V1 implementation milestones are complete. Offline tests and synthetic end-to-end
+checks pass; **live API access, real-world recall and two weekly validation runs are still
+pending**. A successful demo does not establish that live collection finds the right papers.
+See [the requirements review](docs/V1_REVIEW.md) for the evidence and remaining validation.
 
-## Development quick start (Python 3.11+)
+## Where the work happens
 
-```bash
-cd /workspace/paper-pull
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-pytest -q
-ruff check .
-ruff format --check .
+| Place | Role |
+| --- | --- |
+| Personal GitHub: `josephbns/paper-pull` | Stores code, documentation and synthetic/public test fixtures |
+| Codex cloud | Edits and tests the checkout; runs synthetic demos and authorized public-API checks |
+| Your approved IBM machine | Holds the real workbook, review notes and local reconciliation outputs |
+
+The owner's instruction to use personal GitHub supersedes the build pack's old advice to
+wait for work GitHub. It does not move the real workbook or internal data into the repository.
+
+## 1. Install on Windows PowerShell
+
+Install Python **3.11 or newer** from [python.org](https://www.python.org/downloads/windows/).
+Enable the installer option that adds Python to PATH. Install Git if needed from
+[git-scm.com](https://git-scm.com/downloads/win). Then open PowerShell:
+
+```powershell
+git clone https://github.com/josephbns/paper-pull.git
+Set-Location paper-pull
+py -3 --version
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
 pubmon --help
 ```
 
-On Windows PowerShell activate with `.venv\Scripts\Activate.ps1` instead.
-Tests use synthetic inputs and make no network calls. Package installation needs Internet.
-No API credentials are needed for this milestone.
+These clone commands are for a first local checkout. In an existing checkout, open that
+folder instead. If PowerShell blocks activation, use `.\.venv\Scripts\python.exe` in place
+of `python` and `.\.venv\Scripts\pubmon.exe` in place of `pubmon`; changing system execution
+policy is not required. Development checks ran on Linux; native Windows execution is not yet
+verified.
 
-Settings load from `config/settings.toml`, falling back to `config/settings.example.toml`.
-Paths inside TOML are relative to the project directory supplied to `load_config()`.
-Credentials come from process variables, then a git-ignored `.env`; network commands will
-validate them when implemented. Never commit keys, contact emails, real workbooks or outputs.
+For a new terminal later, reopen this folder and activate the same virtual environment.
+No database server, web server, Node.js or extra service needs starting.
 
-The build pack's statements that GitHub is unavailable are superseded by the owner's
-instruction to use `josephbns/paper-pull`. Its bundled Git history was not imported.
-See `docs/SPEC.md`, `docs/WORK_PLAN.md` and `CODEX_PROMPT.md` for the remaining milestones.
-A complete beginner guide arrives in Milestone 6.
+## 2. Try a fully offline demo first
 
-## History database (Milestone 2)
+No account, email or API key is needed for these commands:
 
-`Store` in `src/pubmon/store.py` opens `data/pubmon.db` by default. This local state remains
-ignored by Git. Every write must run inside `with store.transaction():`; a failure rolls
-back the entire block. Nested transactions are rejected so a helper cannot commit part of
-a larger operation by accident.
-
-The store retains paper summaries, identifiers, latest source records, audit events, runs,
-and decision history. Identifier or source-identity conflicts raise `IdentifierConflict`;
-the caller must send them for review rather than silently reassigning a paper's identity.
-Merge decisions are recorded here; applying them arrives with decision import in Milestone 5.
-
-Run the history tests without API access:
-
-```bash
-pytest -o addopts='' -q --disable-recording --block-network tests/test_store.py
+```powershell
+pubmon run --dry-run --master tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api
+pubmon run --backfill --no-master --fixtures tests/fixtures/api --xlsx
+pubmon status --demo
+pubmon backtest --demo --master tests/fixtures/synthetic_master.xlsx --since 2023-01-01
 ```
 
-Two engineering concepts to look for:
+The first command leaves no persistent database or output files. The next commands use
+ignored `demo/data/` and `demo/out/`, completely separate from live `data/` and `out/`.
+`--fixtures` never falls back to an API. Fixture replay uses the fixture's last update date
+as its replay clock, rather than pretending to be a current live search.
 
-- **Atomicity:** `Store.transaction()` makes a batch of writes succeed or fail together.
-  `test_interrupted_run_safe` verifies the database file is byte-identical after failure.
-- **Idempotency:** `Store.upsert_identifier()` keeps one identifier row when called repeatedly.
-  `Store.store_decision()` similarly avoids duplicating an unchanged review decision.
+The supplied API fixture corpus intentionally covers different records from the synthetic
+master workbook. Its demo back-test can report zero recall; that demonstrates miss reporting,
+not a measurement of live discovery quality. Unit tests also use a controlled history with
+known matches to verify the recall calculation.
 
-## Source adapters (Milestone 3)
+## 3. Get the live API information when ready
 
-- `sources/openalex.py`: `fetch_pair()` and `fetch_clinic_quantum()` return normalized Work
-  lists, checking unique fetched counts against OpenAlex metadata for each query. Pair
-  combinations are unioned by OpenAlex ID; dataset/software records are counted and skipped.
-- `sources/arxiv_src.py`: `fetch_feed()` uses the saved query verbatim; `recheck()` refreshes
-  known IDs in batches of 100, even when they are older than the weekly window. Backfill
-  sorts by submission date so the start-date stopping condition is safe.
-- `sources/crossref.py`: `enrich()` returns DOI publication fields, preprint relations and
-  correction/retraction links. Only HTTP 429 and 5xx errors are retried, up to five attempts.
-- `sources/common.py`: `FetchReport` holds source records, skip counts and notices for later
-  pipeline wiring. `LaneFailed` distinguishes failure from an empty successful search;
-  errors omit underlying request URLs, which may contain credentials.
+| Source | What you need |
+| --- | --- |
+| OpenAlex | Sign in at [openalex.org](https://openalex.org/) and obtain your API key from your account |
+| arXiv | No registration or key for the query API |
+| Crossref | No key for these public requests; provide a contact email |
 
-Correction/retraction notices are separated from normal papers. Linking their Crossref
-`update-to` targets to stored originals and writing audit events arrives in the later pipeline.
-A Crossref response with only a year or month does not invent an exact publication date.
+`PUBMON_EMAIL` is a contact address used in scholarly API requests. It is not an Outlook
+login, and the application does not read your mailbox or require an Outlook password.
 
-### Institution lookup (live, optional during development)
+Set process variables in PowerShell without putting the literal key into command history:
 
-After setting `OPENALEX_API_KEY` and `PUBMON_EMAIL` securely in your process environment:
+```powershell
+$pubmonKey = Read-Host "OpenAlex API key" -AsSecureString
+$env:OPENALEX_API_KEY = [System.Net.NetworkCredential]::new("", $pubmonKey).Password
+$env:PUBMON_EMAIL = Read-Host "API contact email"
+Remove-Variable pubmonKey
+```
 
-```bash
+These variables last for the current PowerShell session. Alternatively, copy `.env.example`
+to a local `.env` and edit it privately; `.env` is ignored by Git. Existing process variables
+have priority over `.env`. Never put real values in `.env.example`, Python code or GitHub commits.
+
+In Codex cloud, use the environment's secret field for `OPENALEX_API_KEY` and runtime variable
+field for `PUBMON_EMAIL`. The required **network domains**, which are not keys, are:
+
+```text
+api.openalex.org
+export.arxiv.org
+api.crossref.org
+```
+
+Their allowlist and credential requirements have been saved as a configuration draft, not
+verified as applied. Review/save them in environment settings and publish the updated
+configuration when ready. Do not paste a key into chat. Live validation was deferred by the
+owner until mailbox/account setup is available.
+
+## 4. Prepare your local settings and watchlist
+
+Copy the public templates only if local files do not already exist:
+
+```powershell
+if (!(Test-Path config/settings.toml)) { Copy-Item config/settings.example.toml config/settings.toml }
+if (!(Test-Path config/watchlist.csv)) { Copy-Item config/watchlist.example.csv config/watchlist.csv }
+```
+
+Open `config/settings.toml` in a text editor. It holds the start date, institution IDs,
+matching thresholds, query/watchlist paths and optional master path. Edit the existing
+`[master]` section rather than adding a duplicate section. Credentials stay in
+process variables or `.env`. For a Windows master path, a TOML literal string avoids
+backslash escaping:
+
+```toml
+[master]
+path = 'C:\Research\Publications_Master.xlsx'
+```
+
+Keep the real workbook outside the checkout, on your approved machine. Paths in settings
+are relative to the project directory unless absolute. `--master` overrides the configured
+path; `--no-master` explicitly skips workbook reconciliation.
+
+The institution IDs in the template come from the build pack. Confirm their scope with:
+
+```powershell
 pubmon resolve-institutions "Cleveland Clinic" "IBM"
 ```
 
-This prints candidate IDs, names, ROR, country, work counts and lineage. It never edits
-settings. The supplied parent institution IDs remain defaults; extra entities are an owner
-scope decision. Before feed collection, copy `config/watchlist.example.csv` to the ignored
-`config/watchlist.csv` and review it. The example currently supplies Clinic-side names only;
-provide IBM-side public author names to enable arXiv IBM confirmation.
+This prints candidates with IDs, ROR, country, work counts and lineage. It never edits
+settings automatically. Decide whether the additional IBM/Clinic entities listed in the
+settings TODO belong; do not guess replacement IDs.
 
-### Recording real public responses (optional)
+Review `config/watchlist.csv`: columns are `name,side,orcid,arxiv_name`, with side `IBM` or
+`CC`. The example has Clinic-side names; add approved public IBM-side author names to enable
+IBM confirmation on arXiv. Put collision-prone names in `arxiv.common_names` in settings.
+The existing query in `config/arxiv_query.txt` is used verbatim.
 
-All adapter tests use hand-written fixtures; **live API behavior is not yet verified**.
-Three optional tests in `tests/test_source_recordings.py` are skipped until cassettes exist.
-On a machine with the API destinations allowed and environment credentials configured, run
-this exact command from the repository root:
+## 5. Run the first live backfill
 
-```bash
-python -m pytest tests/test_source_recordings.py --record-mode=once
+After credentials and API access are ready, run this on the approved machine with your real
+master. The path below is an example; select your actual local file:
+
+```powershell
+$pubmonMasterPath = Read-Host "Local master workbook path"
+pubmon run --backfill --master $pubmonMasterPath --xlsx
+pubmon status
 ```
 
-The destinations are `api.openalex.org`, `export.arxiv.org`, and `api.crossref.org`.
-`tests/conftest.py` removes API-key/contact query parameters and authorization/User-Agent
-headers before cassette writes. Inspect recordings for secrets before committing them.
-After recording, `pytest -q` replays them with network blocked and without real credentials.
-Use `pytest -q --disable-recording` to explicitly omit the optional recording checks.
+`--backfill` searches from the configured `start_date`, initially `2021-01-01`. The normal
+run creates a consistent SQLite backup, records source failures explicitly, and writes
+candidate CSV, optional Excel, and full-work snapshot paths in its summary.
 
-Two concepts to learn here:
+Live history is `data/pubmon.db`; raw responses and logs are under `data/raw/` and `data/logs/`.
+No missing source result deletes known history. A `partial` run returns exit code 2; inspect
+its source counts and logs before treating the collection as complete.
 
-- **Adapters:** `openalex.fetch_pair()` and `arxiv_src.fetch_feed()` translate different APIs
-  into the same Work model. Matching code can use that model without knowing each API format.
-- **Failure isolation:** `common.lane_guard()` raises a safe `LaneFailed` instead of returning
-  an empty list after an outage. Later pipeline code can record that failure and continue
-  other lanes without interpreting missing results as deleted papers.
+For a live rehearsal, add `--dry-run`. It still calls APIs but uses a disposable copy of
+history, discarding database changes, logs, raw archives and exports. A live dry-run needs
+credentials; the explicitly offline demo in section 2 does not.
 
-TODO(owner): verify the Clinic title/abstract filter live, review extra institution scope,
-add public IBM watchlist names, and identify ambiguous names. These do not block offline
-matching development in Milestone 4.
+## 6. Review one row per paper
 
-## Matching and changes (Milestone 4)
+Open the candidate CSV (UTF-8 with BOM) or its optional Excel copy. A linked paper carries
+both its journal DOI and arXiv ID. `events` lists distinct event kinds, `changes` includes all
+material changes, and `versions` describes source versions. A possible duplicate stays on
+its own row with `possible_duplicate_of`; it is not silently merged.
 
-`match.resolve_and_store()` processes a batch of normalized Work objects in one transaction.
-It uses shared identifiers first, then DOI links, then guarded fuzzy matching; otherwise it
-creates a new stable UUID. Conflicting IDs and ambiguous matches remain separate and gain a
-POSSIBLE_DUPLICATE event. Fuzzy matches must pass every configured title, author, year and
-number guard, including decimal numbers and Roman-numeral part labels.
+The full `works_<date>.csv` snapshot contains every paper once, including rejected papers.
+Multiple existing master version rows can appear together in `master_pub_id` on one paper
+row. That is reconciliation information, not an official publication count.
 
-Each source snapshot is retained separately from the canonical paper state. Published
-metadata takes precedence over preprint metadata. Changes are compared once per paper after
-the batch, so rerunning a mixed preprint/journal batch does not generate alternating updates.
-Individual events remain in the audit trail; grouping them into one output row is Milestone 5.
-The run must already exist in the store before calling the batch function.
+Copy the candidate CSV before reviewing it, then fill only `decision` and `reviewer_note`.
+Keep `work_key`, identifiers and headers unchanged. If using Excel, save the reviewed copy
+as **CSV UTF-8**, not an Excel workbook, before importing it.
 
-Supply `raw_records` keyed by `(Source, normalized_source_id)` when original API responses
-are available. For normalized-only callers, a clearly labelled normalized snapshot is kept
-instead; an unchanged source's existing original response is preserved.
+| Decision | Effect |
+| --- | --- |
+| `accepted` | Remember acceptance |
+| `rejected` | Suppress repeats until a later material change |
+| `not_collab` | Same suppression for an out-of-scope paper |
+| `merge:<target_work_key>` | Explicitly approve combining this paper with that existing identity |
+| Blank | Leave the decision unchanged |
 
-The additive migration keeps existing work IDs, raw responses and identifiers. Databases
-created before Milestone 4 gain nullable snapshot columns; normalized author/title evidence
-becomes available when those records are fetched again. Missing legacy evidence is never
-used to justify a fuzzy merge.
+Import the reviewed copy:
 
-Run the complete offline checks from the activated environment:
+```powershell
+$pubmonReviewedCsv = Read-Host "Path to reviewed CSV copy"
+pubmon import-decisions $pubmonReviewedCsv
+```
 
-```bash
-pytest -o addopts='' -q --block-network
+For synthetic reviews use `pubmon import-decisions --demo PATH`. Re-importing unchanged
+reviews is harmless. Invalid rows are reported with their row numbers and skipped. Merges
+preserve identifiers and events, with aliases for old reviewed keys.
+
+A same-day rerun uses a run-suffixed output filename, preserving prior review files. Files
+are renamed atomically before event export markers are committed. Do not review output from
+a run reported as failed; those events remain pending for retry. Apply any desired tracker
+updates by hand; the application never saves the master workbook.
+
+## 7. Measure recall with the back-test
+
+After a backfill, on the approved machine:
+
+```powershell
+pubmon backtest --master $pubmonMasterPath --since 2023-01-01
+```
+
+This makes **no network requests**. It opens the workbook and history read-only, reports
+recall and misses (Pub ID and Name), and writes a new `out/backtest_<date>.csv` without
+replacing an existing report. It does not import decisions, change history or save the master.
+
+Eligible rows have type `Peer Reviewed Journal`, `Open Publication` or `Review Paper`, status
+`Published` or `Accepted`, and a complete publication date on/after `--since` (inclusive).
+Other rows stay in the report with an exclusion reason. Missing dates are explicit exclusions.
+Matches use DOI/arXiv/PMID, then two shared author surnames plus a date within 30 days only
+for master rows without IDs. `Name` is display-only. Ambiguous matches are reported as misses.
+
+`recall = found eligible rows / all eligible rows`. If no rows are eligible, recall is null,
+not 100%. Two legacy preprint/journal rows may both match one paper, so this is **tracker-row
+recall**, not a deduplicated publication total or a manual counting decision.
+
+The proposed V1 validation gate is at least 90% recall on the scoped real master since 2023,
+every miss explained, coverage of papers surfaced by current feeds, two weekly runs with no
+repeat candidates, and no wrong merges found during review. Running the command successfully
+does not mean the gate is met; the command reports results even below 90%.
+
+## 8. Run weekly
+
+In the same configured environment:
+
+```powershell
+pubmon run --master $pubmonMasterPath --xlsx
+pubmon status
+```
+
+OpenAlex re-pulls the configured period each run. arXiv normally looks back 90 days by update
+time and rechecks every known arXiv ID for a newly added DOI/journal reference. Review and
+import decisions again. Scheduling, Slack and GitHub Actions are V2 work; V1 is run manually.
+
+## 9. Run development checks
+
+```powershell
+python -m pytest -o addopts='' -q --block-network
 ruff check .
 ruff format --check .
 python -m pip check
 ```
 
-Two concepts to learn:
+Tests use synthetic data and public ID pairs. The default pytest configuration blocks network.
+Three optional source-recording checks are skipped until real cassettes exist. To explicitly
+record public API responses after access is ready:
 
-- **Canonical state:** `diff.canonical_state()` selects one current view from multiple source
-  versions. Retaining the originals lets the matcher compare earlier titles and identifiers.
-- **Determinism:** `diff.material_changes()` compares a fixed set of meaningful fields.
-  `match.resolve_and_store()` compares once per paper per batch, avoiding duplicate updates
-  caused by source ordering.
-
-No new owner decisions block Milestone 5. Live API checks, watchlist review and institution
-scope remain outstanding as documented above.
-
-## Run and review (Milestone 5)
-
-From the repository root with the virtual environment activated, this **offline** smoke run
-uses only the supplied synthetic fixtures and leaves the real database and exports unchanged:
-
-```bash
-pubmon run --dry-run --master tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api
+```powershell
+python -m pytest tests/test_source_recordings.py --record-mode=once
 ```
 
-For an offline run without workbook reconciliation:
+Recordings remove API-key/contact query parameters and authorization/User-Agent headers.
+Inspect cassettes for secrets before committing. Afterwards they replay offline. All API
+access was still blocked/unconfigured at the last live attempt; offline tests do not replace
+live validation.
 
-```bash
-pubmon run --dry-run --no-master --fixtures tests/fixtures/api
-```
+## 10. Keep these out of GitHub
 
-`--fixtures` is explicit: it never falls back to an API. Non-dry fixture runs keep history
-and outputs under ignored `demo/`, completely separate from live `data/` and `out/`. Removing it selects live collection,
-which requires environment credentials, API access and a reviewed local watchlist. Fixture
-replay uses the fixture's latest arXiv update as its replay clock; it is not a live search.
+Never commit real workbooks, raw/live history, review decisions or notes, generated outputs,
+keys or contact emails. `.gitignore` covers `.env`, local settings/watchlists, `data/`, `out/`,
+`demo/`, and spreadsheets except synthetic fixtures. Check `git status --short` before a commit.
+Use only public or synthetic fixtures in this repository and in cloud development.
 
-To inspect real generated synthetic outputs, omit `--dry-run` and optionally add `--xlsx`:
+## Troubleshooting
 
-```bash
-pubmon run --no-master --fixtures tests/fixtures/api --xlsx
-pubmon status --demo
-pubmon import-decisions --demo demo/out/your_reviewed_file.csv
-```
+| Symptom | What to check |
+| --- | --- |
+| Missing environment variables | Set the key/contact email in this terminal; use environment settings in cloud |
+| Proxy tunnel `403` | Apply the required API domain allowlist; it is separate from GitHub access |
+| Missing watchlist | Copy and review the example; the app will not guess missing names |
+| Missing master columns | Check the documented header row; do not rename tracker columns automatically |
+| No history for back-test | Run a committed backfill first; a dry-run does not create history |
+| Partial run | Inspect `pubmon status` and the run log; a source outage is not an empty search |
+| Zero candidates on rerun | Expected if nothing material changed; the full snapshot still includes known papers |
 
-Each candidate row contains one `work_key`, both preprint/journal identifiers when linked,
-distinct event kinds, and all field changes in its `changes` cell. Uncertain matches stay
-separate with `possible_duplicate_of`. A `works_<date>.csv` snapshot includes every paper once.
-CSV files include a UTF-8 BOM and `arXiv:` prefixes; optional Excel exports format IDs as text.
-Repeated runs on the same day append the run ID to filenames rather than overwrite prior
-review files. Existing candidate files, even if edited, are never re-saved by the application.
-
-Fill only `decision` and `reviewer_note` in a copy of the candidate CSV, then import it.
-Decisions are `accepted`, `rejected`, `not_collab`, or `merge:<target_work_key>`; invalid rows
-are reported and skipped. An approved merge preserves identifiers/history and records aliases
-so re-importing the old source key is harmless. Rejected candidates return only after a later
-material change. A merge records identity approval; it is not a counting-policy decision.
-
-Master inputs must have the documented headers and unique Pub IDs. Only approved columns are
-accessed; ID hyperlinks are read from ZIP relationships with no editable workbook handle.
-Matching uses identifiers, then authors/date for rows lacking identifiers; `Name` is display
-only. If two existing master rows represent preprint and journal versions, their Pub IDs are
-listed together on the single output row. Manual columns are never copied to outputs.
-
-Real master reconciliation and reviewer decisions remain local to an approved IBM machine.
-Development here uses only public metadata and synthetic data. All `data/` and `out/` files
-remain ignored by Git.
-
-The pipeline makes a consistent SQLite backup before a normal run. Dry runs use a temporary
-copy of history and discard their database changes, raw archives, logs and generated rows.
-Source failures are recorded as `partial` with CLI exit code 2; other sources continue.
-Failed matching rolls back its whole transaction and records a failed run separately.
-Files are renamed atomically before export markers are committed. A file-write failure leaves
-its events pending for retry; do not review output from a run reported as failed.
-
-Two engineering concepts:
-
-- **Projection:** `master.read_master()` accesses an explicit allowlist of fields.
-  The manual-column spy test fails if the reader accesses a protected data cell.
-- **Grouping:** `export.group_by_work()` retains each audit event under one paper key.
-  `candidate_rows()` converts that group to one row carrying all changes and version IDs.
-
-Live API checks remain unrun. Offline fixture/acceptance checks do not establish real-world
-recall; the Milestone 6 back-test will provide the tool for that later validation.
+For Linux/cloud shells, activate with `source .venv/bin/activate`; the `pubmon` commands are
+the same. Each cloud task already has an isolated checkout; no Git worktree is needed.
+See [SPEC](docs/SPEC.md), [work plan](docs/WORK_PLAN.md), [security](docs/SECURITY.md),
+[column rules](docs/MASTER_COLUMNS.md), and [changelog](docs/CHANGELOG.md) for details.

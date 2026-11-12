@@ -134,3 +134,29 @@
   completed with 3 paper rows and no persistent database/output files in this checkout.
 - Isolated non-dry synthetic replay under ignored demo/ with explicit --demo status/review
   selection, so fixture runs cannot contaminate live data/pubmon.db or live output files.
+
+## 2026-11-12 — Milestone 6
+
+- Added `pubmon backtest --master PATH --since YYYY-MM-DD [--demo]` and `backtest.py`.
+  Reports tracker-row recall, found/missing/ambiguous IDs, and explicit exclusions; prints
+  misses with Pub ID/Name and writes a new BOM CSV without overwriting a prior report.
+- Reused identifier/guarded authors-date matching. Preprint and journal master rows can
+  resolve to one paper identity; the diagnostic denominator is eligible rows, not an official
+  publication count. Empty eligible scope reports null recall, not a false perfect score.
+- Added read-only SQLite Store mode, including safe reading of pre-migration history;
+  back-testing never migrates or updates the history database. Input byte identity is tested.
+- Replaced the scaffold README with a Windows PowerShell beginner guide covering installation,
+  offline demos, secure environment variables, settings/watchlists, institution lookup,
+  backfill, weekly review/import, back-testing and data boundaries. Native Windows execution
+  remains unverified; equivalent installed CLI workflows were exercised on Linux.
+- Added docs/V1_REVIEW.md mapping all five hard rules and 17 acceptance cases to code/tests,
+  and refreshed START_HERE/work-plan status. All six implementation milestones are complete.
+- Validation: 174 offline tests passed, 3 optional live-recording tests skipped; Ruff lint
+  and formatting, dependency and whitespace checks passed. Independent installed-CLI replay
+  plus back-test wrote 11 diagnostic rows, preserved database/workbook bytes and prior reports.
+- The demo API fixture corpus intentionally does not cover the synthetic master: its zero
+  recall is a reporting smoke result, not live performance. Controlled-history tests verify
+  five found eligible rows out of nine and exercise exclusions, cutoffs and ambiguity.
+- No new TODO(owner) decisions. Live API configuration/queries, institution/watchlist review,
+  real-master recall and two weekly validation runs remain outstanding. The owner deferred
+  live account/mailbox setup; no live requests were made during this milestone.

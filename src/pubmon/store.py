@@ -56,8 +56,14 @@ class IdentifierConflict(ValueError):
 class Store:
     """Persist public paper history and local review decisions in one SQLite file."""
 
-    def __init__(self, path: Path | str = "data/pubmon.db") -> None:
+    def __init__(self, path: Path | str = "data/pubmon.db", *, read_only: bool = False) -> None:
         path = Path(path)
+        self._read_only = read_only
+        if read_only:
+            connection = sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
+            self._db = Database(connection)
+            self._has_aliases = "work_aliases" in self._db.table_names()
+            return
         path.parent.mkdir(parents=True, exist_ok=True)
         self._db = Database(path)
         self._db.execute("PRAGMA foreign_keys = ON")
@@ -67,6 +73,7 @@ class Store:
             for statement in SCHEMA:
                 self._db.execute(statement)
             self._migrate_snapshots()
+        self._has_aliases = True
 
     def _migrate_snapshots(self) -> None:
         # Additive migration keeps databases created before matching was implemented.
@@ -94,6 +101,8 @@ class Store:
     @contextmanager
     def transaction(self) -> Iterator["Store"]:
         """Commit all enclosed writes together; roll back on any exception."""
+        if self._read_only:
+            raise RuntimeError("History was opened read-only")
         if self._db.conn.in_transaction:
             raise RuntimeError("Nested transactions are not supported")
         self._db.execute("BEGIN IMMEDIATE")
@@ -347,7 +356,7 @@ class Store:
     def get_work_state(self, work_key: str) -> Row | None:
         """Read the canonical matching snapshot, or None for pre-migration records."""
         row = self.get_work(work_key)
-        return json.loads(row["state_json"]) if row and row["state_json"] else None
+        return json.loads(row["state_json"]) if row and row.get("state_json") else None
 
     def save_work_state(self, work_key: str, state: Row) -> None:
         """Persist the canonical snapshot in the same transaction as its audit events."""
@@ -364,6 +373,8 @@ class Store:
 
     def canonical_key(self, key: str) -> str:
         """Resolve an old reviewed key after an explicitly approved merge."""
+        if not self._has_aliases:
+            return key
         seen = set()
         while key not in seen:
             seen.add(key)
