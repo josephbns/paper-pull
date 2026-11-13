@@ -41,7 +41,15 @@ def enrich(
     report = report if report is not None else FetchReport()
     with lane_guard("crossref", report):
         canonical = normalize_ids(doi=doi)["doi"]
-        response = _request(client or Crossref(mailto=settings.email), canonical)
+        try:
+            response = _request(client or Crossref(mailto=settings.email), canonical)
+        except Exception as exc:
+            # A valid DOI can belong to another registry or not yet be indexed here.
+            # Keep its source metadata; an absent optional enrichment is not an outage.
+            if http_status(exc) != 404:
+                raise
+            report.skipped["not_found"] += 1
+            return {}
         raw = response["message"]
         report.raw_records.append(raw)
         relations = _relations(raw)
