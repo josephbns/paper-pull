@@ -50,4 +50,12 @@ def project(tmp_path):
     (tmp_path / "config").mkdir()
     for name in ("settings.example.toml", "arxiv_query.txt"):
         shutil.copyfile(root / "config" / name, tmp_path / "config" / name)
+    shutil.copytree(root / "profiles", tmp_path / "profiles")
     return load_config(tmp_path)
+
+
+@pytest.fixture(autouse=True)
+def no_profile_environment(monkeypatch):
+    """Tests choose profiles explicitly; CI sets PUBMON_PROFILE for real runs only."""
+    for name in ("PUBMON_PROFILE", "PUBMON_MASTER"):
+        monkeypatch.delenv(name, raising=False)

@@ -46,6 +46,18 @@ class Settings:
     arxiv_query: str | None = field(default=None, repr=False)
     watchlist: tuple[WatchAuthor, ...] | None = field(default=None, repr=False)
     workspace_dir: Path | None = None
+    # Set only by named profiles (profile.py); older settings files leave the defaults.
+    profile_name: str | None = None
+    topic_terms: tuple[str, ...] = ()
+    topic_categories: tuple[str, ...] = ()
+    broad_terms: tuple[str, ...] = ()
+    hardware_terms: tuple[str, ...] = ()
+    backup_names: tuple[str, ...] = ()
+
+    @property
+    def tag_terms(self) -> tuple[str, ...]:
+        """Terms that mark a paper as on-topic; older profiles reuse the OpenAlex terms."""
+        return self.topic_terms or self.quantum_terms
 
     @property
     def partner_institution_ids(self) -> tuple[str, ...]:
@@ -101,7 +113,11 @@ def _validate(raw: dict) -> None:
 
 
 def load_config(project_dir: Path | str = ".", *, path: Path | str | None = None) -> Settings:
-    """Load the local TOML, falling back to the example only when it is absent."""
+    """Load the older settings TOML (tests and existing installs); new setups use profiles.
+
+    The command line never relies on the example fallback below: `pubmon` requires a named
+    profile or an existing local config/settings.toml (see cli.load_settings).
+    """
     root = Path(project_dir).resolve()
     config_path = Path(path) if path is not None else Path("config/settings.toml")
     config_path = root / config_path

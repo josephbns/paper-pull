@@ -88,7 +88,7 @@ need a paid plan.
 | --- | --- | --- | --- | --- |
 | A `pair` | OpenAlex | works with ≥1 author affiliated with an IBM institution **and** ≥1 with a Cleveland Clinic institution | high | Core definition of a collaboration paper |
 | B `clinic_quantum` | OpenAlex | works with a Cleveland Clinic affiliation **and** a quantum term in title/abstract | review | The tracker counts some Clinic-only quantum papers with no IBM author |
-| C `arxiv_feed` | arXiv | the owner's existing feed query, verbatim from `config/arxiv_query.txt` | review unless an IBM watchlist author is present | Fastest source for preprints |
+| C `arxiv_feed` | arXiv | the query built from the profile's partner people, phrases and topic terms (it keeps every clause of the owner's original feed) | review unless an IBM watchlist author is present | Fastest source for preprints |
 
 ### Lane A — OpenAlex pair query
 
@@ -132,8 +132,10 @@ q = (
 )
 ```
 
-- Default `quantum_terms`: `quantum`. Keep the list short; OpenAlex rate-limits searches with
-  more than five boolean operators.
+- Terms come from the profile's `[topic] terms` (older format: `quantum_terms`). OpenAlex
+  rate-limits searches with more than five boolean operators, so terms are sent in groups of
+  at most five (one query per group and partner ID, results combined by OpenAlex ID), with
+  multi-word terms quoted as exact phrases (`term_searches()` in `sources/openalex.py`).
 - Set `ibm_confirmed = True` only if an IBM institution ID appears among the work's
   authorships; otherwise `False`. Never drop a work for lacking IBM.
 - **Do not use the `search=` parameter.** It searches full text: on 12 Nov 2026 it returned
@@ -385,8 +387,9 @@ changes. Re-importing the same file is harmless (idempotent).
 
 ```
 src/pubmon/
-  cli.py              argparse: run | resolve-institutions | import-decisions | status
-  config.py           settings.toml + env vars → frozen dataclass
+  cli.py              argparse: run | check-profile | resolve-institutions | import-decisions | status | backtest
+  config.py           older settings.toml + env vars → frozen dataclass
+  profile.py          profiles/<name>.toml → strict checks → the same Settings dataclass
   models.py           Work dataclass, enums
   sources/openalex.py fetch_pair(), fetch_clinic_quantum(), lookup_institutions()
   sources/arxiv_src.py fetch_feed(), recheck(ids)
@@ -403,8 +406,10 @@ src/pubmon/
   log.py              logging setup with run_id
 ```
 
-Commands:
+Commands (each needs a profile: `--profile NAME`, `PUBMON_PROFILE`, or an existing local
+`config/settings.toml`; there is no default):
 
+- `pubmon check-profile` — validates the profile and prints what it will search for. No API calls.
 - `pubmon run [--dry-run] [--backfill] [--no-master] [--master PATH] [--xlsx] [--fixtures PATH]`
   `--fixtures` is explicit offline synthetic replay, never an implicit API fallback.
   Replay history/outputs live under ignored `demo/`; `status --demo` and
@@ -436,24 +441,32 @@ Commands:
 
 ## 13. Configuration
 
-`config/settings.toml` is the single collaboration profile. Copy the complete public CCF
-starting template from `config/settings.example.toml`; see `docs/CUSTOMIZATION.md`.
+Each QIC is one profile, `profiles/<name>.toml`, holding only public criteria; see
+`docs/CUSTOMIZATION.md` for every key and `docs/SETUP.md` for onboarding. `profile.py` checks
+it strictly (unknown keys, missing keys and bad values stop the command) and translates it
+into the same `Settings` object the older format produces.
 
-- `[collaboration]`: names and labels (`name`, `partner_name`, `partner_label`, `ibm_name`).
-- `[storage].workspace`: runtime history/output root, initially `"."` for CCF. Select a fresh
-  workspace for a different QIC; configuration and master relative paths stay project-relative.
-- `[openalex]`: `ibm_institution_ids`, generic `partner_institution_ids`, terms and skipped types.
-- `[arxiv]`: inline `query`, inline `watchlist` author tables, and `common_names`.
-- Top-level dates, `[matching]` thresholds and `[master].path` retain their existing meanings.
-- Private API key and contact email come from `OPENALEX_API_KEY` / `PUBMON_EMAIL`, optionally
-  in ignored `.env`. No real values enter the public template.
+- `[qic]`: names, `start_date`, `workspace` (a separate history root per QIC).
+- `[institutions]`: OpenAlex `ibm` and `partner` institution IDs.
+- `[topic]`: `terms` (search + **Quantum?** = Yes), `broad_terms` (**Quantum?** = Maybe, never
+  searched), `arxiv_categories`, `hardware_terms` (**IBM hardware (suggested)**).
+- `[search]`: arXiv window, extra arXiv phrases, `common_names`, `skip_types`, optional
+  `arxiv_query_override`.
+- `[matching]`: thresholds as before.
+- `[[people]]`: each person once, with `side` (`partner` finds papers, `ibm` only confirms),
+  `aliases`, optional `orcid`, and `tab` (`backup` routes papers found only through them to the
+  Backup sheet).
 
-Legacy `cc_institution_ids`, `query_file`, `watchlist_file` and side `CC` are supported.
-Do not specify inline query/watchlist and its file reference together. The query is never
-regenerated from names. The stable `clinic_quantum` history lane now uses generic configured
-partner IDs. Changing a profile does not clear history, so use separate QIC workspaces.
-Workbook reconciliation remains tied to the current approved header template; supporting
-another workbook layout requires a reviewed field mapping rather than guessing columns.
+The arXiv query is generated from partner people, phrases, categories and topic terms. IBM
+people are excluded from the search because their names would pull in quantum papers
+without the partner. `tests/test_profile.py` pins the Cleveland Clinic query to every clause
+of the original hand-written feed, so additions are deliberate. OpenAlex topic searches are
+sent in groups of at most five terms, with multi-word terms quoted.
+
+Private values come from environment variables or a git-ignored `.env`: `OPENALEX_API_KEY`,
+`PUBMON_EMAIL`, optional `PUBMON_PROFILE` and `PUBMON_MASTER` (the real master path, never in a
+profile). The older `config/settings.toml` format (with its legacy keys) still loads when no
+profile is named. Workbook reconciliation remains tied to the approved header template.
 
 ## 14. Acceptance tests (all must pass offline)
 

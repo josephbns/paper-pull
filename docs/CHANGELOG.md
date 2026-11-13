@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-11-13 — Named QIC profiles, topic tags and setup guide (owner-approved scope)
+
+- Added profile.py and `profiles/`: one strictly checked, committed, public settings file per
+  QIC (`profiles/cleveland-clinic.toml`, blank `profiles/TEMPLATE.toml.example`). Unknown or
+  missing keys stop the command with the section and allowed keys. Profiles translate into
+  the existing Settings object, so existing validation, history and tests are unchanged.
+- Commands now require a profile (`--profile`, `PUBMON_PROFILE`, or `PUBMON_PROFILE` in
+  `.env`) or an existing local `config/settings.toml`; the silent fallback to the example
+  file no longer applies to the command line. New `pubmon check-profile` validates a profile
+  and prints the generated arXiv query without calling APIs.
+- People are listed once. Partner people and phrases build the arXiv query; IBM people only
+  confirm papers. A test pins the CCF query to every clause of the original feed; the only
+  deliberate additions are Ruihao Li / Rui-Hao Li. Seeded 32 IBM people: 31 IBM-affiliated
+  (per OpenAlex) authors on two or more public quantum papers with a Cleveland Clinic author,
+  plus Sarah Mostame from the public FCC-lattice arXiv paper.
+- Topic terms replace the bare word "quantum" in the OpenAlex partner search (groups of at
+  most five, phrases quoted). New master columns: Other preprint links, Quantum? (Yes/Maybe/
+  No), IBM hardware (suggested); Date for arXiv is now filled. New Backup sheet for papers
+  found only through `tab = "backup"` people (Sergii Strelchuk).
+- The private master path moved to `PUBMON_MASTER` in `.env` (or `--master`); profiles reject
+  it. GitHub workflow takes a profile input. Added docs/SETUP.md (sign-ups, install,
+  profiles, GitHub Actions, moving to IBM GitHub) and rewrote CUSTOMIZATION.md.
+- Validation: 215 offline tests passed, 2 optional source recordings skipped. Lint and
+  formatting pass; synthetic dry run and workbook generation pass with the profile. On the
+  13 Nov live output (titles only), all 22 off-topic partner papers tag "No" and the 44
+  Strelchuk-only papers route to Backup. No live API run yet.
+- Remaining owner TODOs: verify quoted OpenAlex phrase search live; review hardware terms,
+  IBM people and common names (e.g. Jun Qin); institution scope (IBM Japan, Clinic Abu Dhabi,
+  Akron, London).
+
 ## 2026-11-13 — Publication selection and affiliation evidence
 
 - Added evidence.py to explain inclusion from stored public source records, current profile

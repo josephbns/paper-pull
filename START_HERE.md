@@ -1,5 +1,8 @@
 # Start here
 
+New users and other QICs: follow [docs/SETUP.md](docs/SETUP.md) — sign-ups, install,
+your QIC profile, first run, and moving the project to IBM's GitHub.
+
 The V1 implementation is now in this repository. Start with [README.md](README.md) for the
 Windows setup, offline demo, API configuration, live collection, review and back-test workflow.
 

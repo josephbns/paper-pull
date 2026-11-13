@@ -12,6 +12,9 @@ checks pass; **live API access, real-world recall and two weekly validation runs
 pending**. A successful demo does not establish that live collection finds the right papers.
 See [the requirements review](docs/V1_REVIEW.md) for the evidence and remaining validation.
 
+**New here?** Start with [docs/SETUP.md](docs/SETUP.md): accounts and keys to sign up for,
+installation, setting up a QIC profile, first run, and moving the project to IBM's GitHub.
+
 ## Where the work happens
 
 | Place | Role |
@@ -30,9 +33,9 @@ wait for work GitHub. It does not move the real workbook or internal data into t
 In repository Settings → Secrets and variables → Actions, add repository secrets
 `OPENALEX_API_KEY` and `PUBMON_EMAIL`. Do not put their values in repository files.
 
-Open **Actions → Generate candidate Excel → Run workflow**, select `main`, then click
-**Run workflow**. After it finishes, open that run and download the
-`publication-candidates-<run number>` artifact under **Artifacts**. Extract the ZIP and
+Open **Actions → Generate candidate Excel → Run workflow**, select `main`, type the profile
+name (default `cleveland-clinic`), then click **Run workflow**. After it finishes, open that
+run and download the `publication-candidates-<profile>-<run number>` artifact under **Artifacts**. Extract the ZIP and
 open **`master_<date>.xlsx`** for the complete generated tracker. The candidate `.xlsx`
 contains only new/changed papers. Downloads require signing in to GitHub.
 
@@ -92,9 +95,11 @@ No database server, web server, Node.js or extra service needs starting.
 
 ## 2. Try a fully offline demo first
 
-No account, email or API key is needed for these commands:
+No account, email or API key is needed for these commands. Every command needs a profile;
+the first line sets it for this PowerShell window (step 3 shows how to save it in `.env`):
 
 ```powershell
+$env:PUBMON_PROFILE = "cleveland-clinic"
 pubmon run --dry-run --master tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api
 pubmon run --backfill --no-master --fixtures tests/fixtures/api --xlsx
 pubmon status --demo
@@ -115,7 +120,7 @@ known matches to verify the recall calculation.
 
 | Source | What you need |
 | --- | --- |
-| OpenAlex | Sign in at [openalex.org](https://openalex.org/) and obtain your API key from your account |
+| OpenAlex | Make a free account at [openalex.org](https://openalex.org/), then copy your key from [openalex.org/settings/api](https://openalex.org/settings/api) |
 | arXiv | No registration or key for the query API |
 | Crossref | No key for these public requests; provide a contact email |
 
@@ -151,45 +156,35 @@ owner until mailbox/account setup is available.
 
 ## 4. Personalize the collaboration in one profile
 
-Copy the complete profile if it does not already exist:
+Each QIC has one profile file in `profiles/`. The complete Cleveland Clinic profile is
+`profiles/cleveland-clinic.toml`; new QICs start from `profiles/TEMPLATE.toml.example`.
+A profile holds only public criteria (institution IDs, topic terms, names of authors on
+public papers), so it is committed to Git and its changes are tracked. Check one, without
+calling any API, with:
 
 ```powershell
-if (!(Test-Path config/settings.toml)) { Copy-Item config/settings.example.toml config/settings.toml }
-notepad config/settings.toml
+pubmon --profile cleveland-clinic check-profile
 ```
 
-This one file holds names, IBM/partner institution IDs, dates, keywords, the complete arXiv
-query, author watchlist, matching thresholds, workspace and master path. The new CCF profile
-needs no separate watchlist CSV or query-file edit. Private keys/contact email stay in `.env`
-or environment variables; [the customization guide](docs/CUSTOMIZATION.md) shows both files.
+It prints the partner, institution IDs, people counts, topic terms and the exact arXiv
+search the profile builds. Typos and missing settings stop with a message naming the
+section and key. Choose the profile with `--profile <name>`, or save `PUBMON_PROFILE=<name>`
+in `.env`; there is no default profile.
 
-For another QIC, replace the partner details, verified IDs, query and public authors, and
-choose a fresh `storage.workspace` such as `workspaces/my-qic` to keep its history/reviews
-separate. Existing CCF history stays at the default workspace `"."`. `status`, decision import
-and back-testing follow the workspace automatically. Do not mix another QIC into CCF's database.
+People are listed once each. `side = "partner"` people find papers (their names build the
+arXiv search); `side = "ibm"` people only confirm papers. `tab = "backup"` sends papers found
+only through that person to the generated workbook's Backup sheet. Topic terms fill the
+**Quantum?** column (Yes / Maybe / No); hardware terms fill **IBM hardware (suggested)** for
+papers with no IBM author.
 
-Edit the existing `[master]` section for a Windows master path:
+The real master path never goes in a profile. Put it in `.env` as
+`PUBMON_MASTER=C:\Research\Publications_Master.xlsx`, or pass `--master <path>`. Keep the
+workbook outside the checkout on your approved machine. `--no-master` skips reconciliation.
+All profiles currently require the same approved workbook column layout.
 
-```toml
-[master]
-path = 'C:\Research\Publications_Master.xlsx'
-```
-
-Keep the real workbook outside the checkout on your approved machine. `--master` overrides
-this path; `--no-master` skips reconciliation. All profiles currently require the same
-approved workbook column layout; arbitrary QIC spreadsheet layouts are not implemented.
-
-The template's institution IDs come from the build pack. Use profile names for lookup:
-
-```powershell
-pubmon resolve-institutions
-```
-
-This prints candidates and never edits settings. Confirm institution scope before production.
-Add only confirmed public authors with side `IBM` or `PARTNER` in `[arxiv].watchlist`, and put
-collision-prone names in `common_names`. The current example has partner-side names only;
-IBM-side names remain an owner TODO. The inline query is preserved verbatim, not regenerated.
-Legacy separate query/watchlist files remain supported when explicitly referenced.
+See [the setup guide](docs/SETUP.md) to create a profile for another QIC and
+[the customization reference](docs/CUSTOMIZATION.md) for every setting. An existing local
+`config/settings.toml` still works when no profile is named.
 
 ## 5. Run the first live backfill
 

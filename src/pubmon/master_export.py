@@ -12,6 +12,29 @@ from pubmon.evidence import DETAIL_FIELDS, SUMMARY_FIELDS
 from pubmon.export import SNAPSHOT_COLUMNS, _atomic
 from pubmon.master import HEADERS
 
+# Columns after the approved 36: preprint links, then tags and selection evidence.
+PUBLICATION_HEADERS = HEADERS + ["Other preprint links"] + SUMMARY_FIELDS
+READ_ME = (
+    "Generated master — public source metadata, one row per canonical paper.",
+    "Publications starts with the approved 36 columns, followed by preprint links, tags and selection/affiliation evidence columns. Sources retains version history.",
+    'Backup holds papers found only through people marked tab = "backup" in the profile, with no IBM or partner affiliation evidence.',
+    "Quantum? is Yes when a profile topic phrase appears in a title or abstract or the arXiv category is a profile topic category, Maybe when only a broad word (such as quantum) appears, else No. It tags; it does not decide scope.",
+    "IBM hardware (suggested) lists hardware phrases found in papers with no IBM author. It is a prompt to check, not a confirmation.",
+    "Date for arXiv and arXiv describe the arXiv preprint of the paper; Other preprint links list bioRxiv, medRxiv and similar preprints.",
+    "Review flags are unresolved questions, not an official collaboration/counting decision.",
+    "Manual count, SOW, theme, involvement and other internal fields are intentionally blank.",
+    "IBM Authors and CC and other Authors contain only source-reported IBM/partner affiliation names. Authors contains all authors, including other institutions.",
+    "Partner affiliation authors/affiliations use the profile's partner institution IDs. Institution names/lineages are as reported by OpenAlex, not independent verification.",
+    "Affiliation evidence links each matched author to the source publication and matched institution/profile IDs. Evidence may come from a linked paper version.",
+    "Watchlist name matches are separate evidence: they do not establish affiliation. Common-name collisions are marked in Affiliation evidence.",
+    "Discovery routes describe query inclusion, not confirmed partnership membership or quantum relevance. Missing affiliation evidence stays unverified.",
+    "Dates describe the canonical version; linked version dates and identifiers are in Sources.",
+    "AUTO IDs identify history records; they are not existing master Pub IDs. Fresh GitHub backfills generate new AUTO IDs.",
+    "Possible duplicates stay separate pending review. Correction/retraction flags require review.",
+    "All history records are included, including rejected/not_collab records flagged for exclusion.",
+    "No input master was modified or copied. This workbook does not include existing internal/manual information.",
+)
+
 
 def _flags(row: dict) -> str:
     flags = []
@@ -53,6 +76,8 @@ def _master_row(row: dict) -> dict:
         "IBM Authors": row.get("ibm_affiliation_authors", ""),
         "CC and other Authors": row.get("Partner affiliation authors", ""),
         "arXiv": row["arxiv_id"],
+        "Date for arXiv": date.fromisoformat(row["arxiv_date"]) if row.get("arxiv_date") else None,
+        "Other preprint links": row.get("other_preprints", ""),
         "PubMed": row["pmid"],
         "DOI": row["doi"],
         "OpenAlex ID": row["openalex_id"],
@@ -88,72 +113,73 @@ def _style(sheet, table_name: str, widths: dict[str, int]) -> None:
         sheet.add_table(table)
 
 
+def _publications(sheet, rows: list[dict], table_name: str) -> None:
+    """Write one row per paper in the master layout, with clickable identifier links."""
+    sheet.append(PUBLICATION_HEADERS)
+    for row in rows:
+        values = _master_row(row)
+        sheet.append([values.get(name, "") for name in PUBLICATION_HEADERS])
+        for name, prefix in (
+            ("DOI", "https://doi.org/"),
+            ("arXiv", "https://arxiv.org/abs/"),
+            ("PubMed", "https://pubmed.ncbi.nlm.nih.gov/"),
+            ("OpenAlex ID", "https://openalex.org/"),
+        ):
+            cell = sheet.cell(sheet.max_row, PUBLICATION_HEADERS.index(name) + 1)
+            if cell.value:
+                cell.hyperlink = prefix + str(cell.value).removeprefix("arXiv:")
+    _style(sheet, table_name, {"Title": 65, "Name": 50, "Authors": 60, "Review flag": 65})
+
+
+def _sources(book, rows: list[dict]) -> None:
+    sources = book.create_sheet("Sources")
+    columns = SNAPSHOT_COLUMNS + ["all_authors", "review_events"] + SUMMARY_FIELDS
+    sources.append(columns)
+    for row in rows:
+        sources.append([row.get(name, "") for name in columns])
+    _style(
+        sources,
+        "SourcesTable",
+        {"title": 65, "versions": 70, "all_authors": 60, "possible_duplicate_of": 70},
+    )
+
+
+def _evidence(book, rows: list[dict]) -> None:
+    evidence = book.create_sheet("Affiliation evidence")
+    evidence.append(DETAIL_FIELDS)
+    for row in rows:
+        for item in row.get("affiliation_evidence", []):
+            evidence.append([item.get(name, "") for name in DETAIL_FIELDS])
+            link = evidence.cell(evidence.max_row, DETAIL_FIELDS.index("source_link") + 1)
+            if str(link.value).startswith(("https://", "http://")):
+                link.hyperlink = link.value
+    _style(evidence, "AffiliationEvidenceTable", {"title": 65, "basis": 60, "institution": 45})
+
+
+def _read_me(book) -> None:
+    notes = book.create_sheet("Read me")
+    for text in READ_ME:
+        notes.append([text])
+    notes.column_dimensions["A"].width = 120
+    for cells in notes:
+        cells[0].alignment = Alignment(wrap_text=True, vertical="top")
+        notes.row_dimensions[cells[0].row].height = 32
+
+
 def write_master(rows: list[dict], path: Path) -> None:
     """Write all canonical papers to a new styled workbook with provenance and review flags."""
 
     def write(temporary: Path) -> None:
         book = Workbook()
-        sheet = book.active
-        sheet.title = "Publications"
-        headers = HEADERS + SUMMARY_FIELDS
-        sheet.append(headers)
         ordered = sorted(rows, key=lambda row: (row["pub_date"], row["title"]), reverse=True)
-        for row in ordered:
-            values = _master_row(row)
-            sheet.append([values.get(name, "") for name in headers])
-            for name, prefix in (
-                ("DOI", "https://doi.org/"),
-                ("arXiv", "https://arxiv.org/abs/"),
-                ("PubMed", "https://pubmed.ncbi.nlm.nih.gov/"),
-                ("OpenAlex ID", "https://openalex.org/"),
-            ):
-                cell = sheet.cell(sheet.max_row, HEADERS.index(name) + 1)
-                if cell.value:
-                    cell.hyperlink = prefix + str(cell.value).removeprefix("arXiv:")
-        _style(
-            sheet, "PublicationsTable", {"Title": 65, "Name": 50, "Authors": 60, "Review flag": 65}
-        )
-        sources = book.create_sheet("Sources")
-        columns = SNAPSHOT_COLUMNS + ["all_authors", "review_events"] + SUMMARY_FIELDS
-        sources.append(columns)
-        for row in ordered:
-            sources.append([row.get(name, "") for name in columns])
-        _style(
-            sources,
-            "SourcesTable",
-            {"title": 65, "versions": 70, "all_authors": 60, "possible_duplicate_of": 70},
-        )
-        evidence = book.create_sheet("Affiliation evidence")
-        evidence.append(DETAIL_FIELDS)
-        for row in ordered:
-            for item in row.get("affiliation_evidence", []):
-                evidence.append([item.get(name, "") for name in DETAIL_FIELDS])
-                link = evidence.cell(evidence.max_row, DETAIL_FIELDS.index("source_link") + 1)
-                if str(link.value).startswith(("https://", "http://")):
-                    link.hyperlink = link.value
-        _style(evidence, "AffiliationEvidenceTable", {"title": 65, "basis": 60, "institution": 45})
-        notes = book.create_sheet("Read me")
-        for text in (
-            "Generated master — public source metadata, one row per canonical paper.",
-            "Publications starts with the approved 36 columns, followed by selection/affiliation evidence columns. Sources retains version history.",
-            "Review flags are unresolved questions, not an official collaboration/counting decision.",
-            "Manual count, SOW, theme, involvement and other internal fields are intentionally blank.",
-            "IBM Authors and CC and other Authors contain only source-reported IBM/partner affiliation names. Authors contains all authors, including other institutions.",
-            "Partner affiliation authors/affiliations use configured partner IDs (CCF by default). Institution names/lineages are as reported by OpenAlex, not independent verification.",
-            "Affiliation evidence links each matched author to the source publication and matched institution/profile IDs. Evidence may come from a linked paper version.",
-            "Watchlist name matches are separate evidence: they do not establish affiliation. Common-name collisions are marked in Affiliation evidence.",
-            "Discovery routes describe query inclusion, not confirmed partnership membership or quantum relevance. Missing affiliation evidence stays unverified.",
-            "Dates describe the canonical version; linked version dates and identifiers are in Sources.",
-            "AUTO IDs identify history records; they are not existing master Pub IDs. Fresh GitHub backfills generate new AUTO IDs.",
-            "Possible duplicates stay separate pending review. Correction/retraction flags require review.",
-            "All history records are included, including rejected/not_collab records flagged for exclusion.",
-            "No input master was modified or copied. This workbook does not include existing internal/manual information.",
-        ):
-            notes.append([text])
-        notes.column_dimensions["A"].width = 120
-        for cells in notes:
-            cells[0].alignment = Alignment(wrap_text=True, vertical="top")
-            notes.row_dimensions[cells[0].row].height = 32
+        main = [row for row in ordered if row.get("tab", "Main") != "Backup"]
+        backup = [row for row in ordered if row.get("tab", "Main") == "Backup"]
+        book.active.title = "Publications"
+        _publications(book.active, main, "PublicationsTable")
+        _publications(book.create_sheet("Backup"), backup, "BackupTable")
+        _sources(book, ordered)
+        _evidence(book, ordered)
+        _read_me(book)
         book.save(temporary)
         book.close()
 

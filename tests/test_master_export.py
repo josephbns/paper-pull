@@ -46,7 +46,13 @@ def test_generated_master_includes_all_history_on_rerun_without_touching_input(p
     assert initial.read_bytes() == saved
     assert hashlib.sha256(original.read_bytes()).hexdigest() == before
     book = load_workbook(second["paths"]["master"])
-    assert book.sheetnames == ["Publications", "Sources", "Affiliation evidence", "Read me"]
+    assert book.sheetnames == [
+        "Publications",
+        "Backup",
+        "Sources",
+        "Affiliation evidence",
+        "Read me",
+    ]
     sheet = book["Publications"]
     assert [cell.value for cell in sheet[1]][: len(HEADERS)] == HEADERS
     assert sheet.max_row == 4

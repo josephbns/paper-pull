@@ -68,3 +68,64 @@ def test_history_evidence_survives_rerun_and_does_not_promote_watchlist(project)
     assert "Both sides reported" in linked["Affiliation evidence status"]
     assert linked["Evidence links"] and linked["affiliation_evidence"]
     assert all(row["Why selected"] and row["Evidence links"] for row in rows)
+
+
+def _tag_row(**changes) -> dict:
+    row = {
+        "IBM affiliations": "",
+        "IBM watchlist matches": "",
+        "Partner affiliations": "",
+        "Partner watchlist matches": "",
+    }
+    row.update(changes)
+    return row
+
+
+def test_topic_terms_match_whole_phrases_only(source_settings):
+    from dataclasses import replace
+
+    from pubmon.evidence import find_terms
+
+    terms = ("quantum computing", "qubit", "IBM Eagle")
+    text = "Quantum dots and quantum mechanical calculations; IBM Eagles; 12 qubits."
+    assert find_terms(text, terms) == []
+    assert find_terms("Advances in Quantum Computing on a qubit", terms) == [
+        "quantum computing",
+        "qubit",
+    ]
+    settings = replace(source_settings, topic_terms=terms)
+    assert settings.tag_terms == terms
+
+
+def test_openalex_abstract_is_rebuilt_in_word_order():
+    from pubmon.evidence import source_text
+
+    raw = {"title": "T", "abstract_inverted_index": {"hardware": [2], "IBM": [0], "quantum": [1]}}
+    assert source_text(raw) == "T IBM quantum hardware"
+
+
+def test_tags_quantum_hardware_and_backup_tab(source_settings):
+    from dataclasses import replace
+
+    from pubmon.evidence import _tags
+
+    settings = replace(
+        source_settings,
+        topic_terms=("quantum computing",),
+        topic_categories=("quant-ph",),
+        hardware_terms=("ibm_cleveland",),
+        backup_names=("Synthetic Backup",),
+    )
+    clinic_only = _tag_row(**{"Partner affiliations": "Cleveland Clinic"})
+    _tags(clinic_only, ["Runs on ibm_cleveland for quantum computing"], set(), settings)
+    assert clinic_only["Quantum?"] == "Yes" and clinic_only["tab"] == "Main"
+    assert clinic_only["IBM hardware (suggested)"] == "Check: mentions ibm_cleveland"
+    with_ibm = _tag_row(**{"IBM affiliations": "IBM (United States)"})
+    _tags(with_ibm, ["Runs on ibm_cleveland"], set(), settings)
+    assert with_ibm["IBM hardware (suggested)"] == "" and with_ibm["Quantum?"] == "No"
+    maybe = _tag_row()
+    _tags(maybe, ["Quantum ensembling methods"], set(), replace(settings, broad_terms=("quantum",)))
+    assert maybe["Quantum?"] == "Maybe"
+    backup = _tag_row(**{"Partner watchlist matches": "Synthetic Backup"})
+    _tags(backup, ["Matchgate theory"], {"quant-ph"}, settings)
+    assert backup["tab"] == "Backup" and backup["Quantum?"] == "Yes"

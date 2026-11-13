@@ -1,0 +1,276 @@
+# Cleveland Clinic profile for pubmon.
+#
+# Public criteria only: institution IDs, names of authors on public papers, and keywords.
+# Never put API keys, email addresses or the path to the real master workbook here: those
+# go in your private .env file (see docs/SETUP.md). Check this file with:
+#     pubmon check-profile --profile cleveland-clinic
+
+[qic]
+name = "Cleveland Clinic"            # partner name used in labels and lookups
+label = "CCF"                        # short label
+collaboration = "IBM–Cleveland Clinic"
+start_date = "2021-01-01"            # ignore papers published before this date
+# Where history and outputs are stored. "." keeps the existing Cleveland Clinic history.
+# Every other QIC must use its own folder, such as "workspaces/<qic-name>".
+workspace = "."
+
+[institutions]
+# OpenAlex institution IDs. Find candidates with: pubmon resolve-institutions --profile <name>
+# A parent ID also covers its child labs through OpenAlex "lineage".
+ibm = ["I1341412227"]
+partner = ["I1316902750"]
+# TODO(owner): review IBM Japan / other IBM entities and Clinic Abu Dhabi, Akron, London.
+
+[topic]
+# Phrases that make a paper "quantum". They are used three ways: to search OpenAlex for
+# partner papers, to search arXiv, and to fill the "Quantum?" column.
+# Use specific phrases; the bare word "quantum" also matches "quantum dots" and
+# "quantum mechanical calculations".
+terms = [
+  "quantum computing", "quantum computer", "quantum computers", "quantum hardware",
+  "quantum processor", "quantum processors", "quantum circuit", "quantum circuits",
+  "quantum algorithm", "quantum algorithms", "quantum machine learning",
+  "quantum-centric", "Qiskit", "qubit", "qubits",
+]
+# A broad word marks "Maybe" when no specific phrase matched (for a person to decide).
+# It is never used to search, because it also matches "quantum dots" and similar.
+broad_terms = ["quantum"]
+arxiv_categories = ["quant-ph"]      # any paper in these arXiv categories counts as on-topic
+# Phrases suggesting IBM quantum hardware was used. They only flag papers that have no IBM
+# author, in the "IBM hardware (suggested)" column, for a person to confirm.
+# TODO(owner): review this first draft.
+hardware_terms = [
+  "ibm_cleveland", "IBM Quantum System One", "IBM quantum computer", "IBM quantum computers",
+  "IBM quantum processor", "IBM quantum hardware", "IBM Heron", "IBM Eagle", "Qiskit Runtime",
+]
+
+[search]
+arxiv_window_days = 90               # weekly runs look back this many days on arXiv
+# Extra arXiv search phrases (any field) that find partner papers besides the people below.
+arxiv_phrases = ["Cleveland Clinic", "ibm_cleveland"]
+# Names shared by many researchers. A paper matched only by these is marked uncertain.
+# TODO(owner): review collision-prone names, for example Jun Qin.
+common_names = ["Jie Shi"]
+
+[matching]
+auto_link = 95                       # title similarity (0-100) to merge versions automatically
+review = 85                          # title similarity that asks a person to check
+year_window = [-1, 3]                # years a journal version may differ from its preprint
+
+# ---------------------------------------------------------------------------------------
+# People. Each person is listed once.
+#   side    "partner" people FIND papers (their names build the arXiv search).
+#           "ibm" people only CONFIRM papers: searching for them would pull in every quantum
+#           paper they write, with or without the partner.
+#   aliases other spellings used on papers (middle initials, hyphens, accents).
+#   tab     "backup" sends papers found only through this person to a separate Backup tab.
+#   orcid   optional unique researcher ID (https://orcid.org), more reliable than a name.
+# Only add names that already appear on public collaboration papers (docs/SECURITY.md).
+# ---------------------------------------------------------------------------------------
+
+# Partner (Cleveland Clinic) side
+
+[[people]]
+name = "Kenneth Merz"
+side = "partner"
+aliases = ["Kenneth M Merz"]
+
+[[people]]
+name = "Feixiong Cheng"
+side = "partner"
+
+[[people]]
+name = "Vijay Krishna"
+side = "partner"
+
+[[people]]
+name = "Daniel Blankenberg"
+side = "partner"
+
+[[people]]
+name = "Bryan Raubenolt"
+side = "partner"
+
+[[people]]
+name = "Fabio Cumbo"
+side = "partner"
+
+[[people]]
+name = "Jayadev Joshi"
+side = "partner"
+
+[[people]]
+name = "Frank DiFilippo"
+side = "partner"
+
+[[people]]
+name = "Jun Qin"
+side = "partner"
+
+[[people]]
+name = "Akhil Shajan"
+side = "partner"
+
+[[people]]
+name = "Danil Kaliakin"
+side = "partner"
+
+[[people]]
+name = "Fangchun Liang"
+side = "partner"
+
+[[people]]
+name = "Subhamoy Bhowmik"
+side = "partner"
+
+[[people]]
+name = "Susanta Das"
+side = "partner"
+
+[[people]]
+name = "Ruihao Li"
+side = "partner"
+aliases = ["Rui-Hao Li"]
+
+[[people]]
+name = "Sergii Strelchuk"
+side = "partner"
+tab = "backup"                       # collaborator on one project; his other papers go to Backup
+
+# IBM side (authors on public quantum papers that also have a Cleveland Clinic author)
+
+[[people]]
+name = "Laxmi Parida"
+side = "ibm"
+
+[[people]]
+name = "Filippo Utro"
+side = "ibm"
+
+[[people]]
+name = "Hakan Doga"
+side = "ibm"
+
+[[people]]
+name = "Aritra Bose"
+side = "ibm"
+
+[[people]]
+name = "Kahn Rhrissorrakrai"
+side = "ibm"
+
+[[people]]
+name = "Omar Shehab"
+side = "ibm"
+
+[[people]]
+name = "Aldo Guzman-Saenz"
+side = "ibm"
+
+[[people]]
+name = "Javier Robledo Moreno"
+side = "ibm"
+
+[[people]]
+name = "Sara Capponi"
+side = "ibm"
+
+[[people]]
+name = "Abdullah Ash Saki"
+side = "ibm"
+
+[[people]]
+name = "Antonio Mezzacapo"
+side = "ibm"
+
+[[people]]
+name = "Caleb Johnson"
+side = "ibm"
+
+[[people]]
+name = "Iskandar Sitdikov"
+side = "ibm"
+
+[[people]]
+name = "Joseph Morrone"
+side = "ibm"
+aliases = ["Joseph A. Morrone"]
+
+[[people]]
+name = "Mario Motta"
+side = "ibm"
+
+[[people]]
+name = "Anupama Ray"
+side = "ibm"
+
+[[people]]
+name = "Daniel Platt"
+side = "ibm"
+aliases = ["Daniel E. Platt"]
+
+[[people]]
+name = "Dhiraj Madan"
+side = "ibm"
+
+[[people]]
+name = "Ivano Tavernelli"
+side = "ibm"
+
+[[people]]
+name = "Meltem Tolunay"
+side = "ibm"
+
+[[people]]
+name = "Nicola Mariella"
+side = "ibm"
+
+[[people]]
+name = "Sergiy Zhuk"
+side = "ibm"
+aliases = ["Sergiy M. Zhuk"]
+
+[[people]]
+name = "Tanvi Gujarati"
+side = "ibm"
+aliases = ["Tanvi P. Gujarati"]
+
+[[people]]
+name = "Gavin Jones"
+side = "ibm"
+aliases = ["Gavin O. Jones"]
+
+[[people]]
+name = "Jannis Born"
+side = "ibm"
+
+[[people]]
+name = "Stefan Woerner"
+side = "ibm"
+aliases = ["Stefan Wörner"]
+
+[[people]]
+name = "Jeannette Garcia"
+side = "ibm"
+aliases = ["Jeannette M. Garcia"]
+
+[[people]]
+name = "Jie Shi"
+side = "ibm"
+
+[[people]]
+name = "Joao Bettencourt-Silva"
+side = "ibm"
+aliases = ["Joao H. Bettencourt-Silva"]
+
+[[people]]
+name = "Khadijeh Najafi"
+side = "ibm"
+
+[[people]]
+name = "Thaddeus Pellegrini"
+side = "ibm"
+
+[[people]]
+name = "Sarah Mostame"
+side = "ibm"

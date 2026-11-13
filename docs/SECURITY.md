@@ -16,10 +16,12 @@ for IBM-internal information unless IBM says otherwise.
 
 ## Rules for code and agents
 
-- The real master path lives only in a local `config/settings.toml` (git-ignored) or a
-  command-line flag. Never commit the real master, a copy of it, or an export of it.
-- `config/settings.toml` is the consolidated partner profile; inline watchlist names must be
-  public if shared. API keys and actual contact emails remain in process variables or `.env`.
+- The real master path lives only in `PUBMON_MASTER` (process variable or git-ignored `.env`),
+  a local `config/settings.toml`, or the `--master` flag. Never commit the real master, a copy
+  of it, or an export of it. Profiles reject a master path.
+- `profiles/<name>.toml` files are committed and public: institution IDs, topic terms and
+  names of authors who already appear on public collaboration papers only. API keys and
+  actual contact emails remain in process variables or `.env`.
 - Optional `workspaces/` keeps QIC runtime state separate and is ignored by Git.
 - `data/` (database, raw API responses, logs) and `out/` (candidate and back-test files) are
   git-ignored. Candidate files can contain review decisions, so treat `out/` as internal.

@@ -2,6 +2,11 @@ name: Generate candidate Excel
 
 on:
   workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile to run (a file name in profiles/, without .toml)"
+        required: true
+        default: cleveland-clinic
 
 permissions:
   contents: read
@@ -14,6 +19,9 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      # Every pubmon command below uses this profile; there is no default profile.
+      PUBMON_PROFILE: ${{ inputs.profile }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -34,6 +42,9 @@ jobs:
 
       - name: Run all offline tests
         run: python -m pytest -o addopts='' -q --block-network
+
+      - name: Check the chosen profile
+        run: pubmon check-profile
 
       - name: Run synthetic dry run
         run: pubmon run --dry-run --master tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api
@@ -72,7 +83,7 @@ jobs:
         if: ${{ !cancelled() && steps.collection.outcome != 'skipped' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publication-candidates-${{ github.run_number }}
+          name: publication-candidates-${{ inputs.profile }}-${{ github.run_number }}
           path: |
             out/master_*.xlsx
             out/candidates_*.xlsx

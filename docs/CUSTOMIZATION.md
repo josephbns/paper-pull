@@ -1,108 +1,94 @@
-# Customize CCF or another QIC
+# Customize a QIC profile
 
-Use **one collaboration profile**, `config/settings.toml`, for partner-specific behavior.
-Keep private credentials/contact details in `.env`, outside the shareable profile. Both local
-files are ignored by Git; their blank/public templates are committed for new users.
+Each QIC is described by one **profile**: `profiles/<name>.toml`. Profiles hold only public
+criteria and are committed to Git, so every change to what the tool searches for has a
+history. Private values live in a git-ignored `.env`. New users: follow
+[SETUP.md](SETUP.md) first; this page is the reference for every setting.
 
-| File | What belongs here |
-| --- | --- |
-| `config/settings.toml` | Collaboration names, institution IDs, dates, keywords, arXiv query, watchlist, matching thresholds, workspace and master path |
-| `.env` | `OPENALEX_API_KEY` and `PUBMON_EMAIL` |
+| File | What belongs here | Shared on GitHub? |
+| --- | --- | --- |
+| `profiles/<name>.toml` | Partner name, OpenAlex institution IDs, dates, topic terms, people, matching thresholds, workspace | Yes (public information only) |
+| `.env` | `OPENALEX_API_KEY`, `PUBMON_EMAIL`, optional `PUBMON_PROFILE`, optional `PUBMON_MASTER` | Never |
 
-This is one place for collaboration customization plus one private credentials file. The
-application never saves keys or actual contact email addresses into the shareable template.
-Environment variables override `.env`; cloud secret/runtime settings can supply the same names.
-The API domains belong in the cloud network allowlist, not in either credential field.
+Choose the profile with `--profile <name>` (before or after the command), the
+`PUBMON_PROFILE` environment variable, or `PUBMON_PROFILE` in `.env`, in that order of
+priority. There is deliberately no default: running the wrong QIC's criteria would produce
+plausible-looking but wrong results. `pubmon --profile <name> check-profile` validates a
+profile and prints what it will do without calling any API.
 
-## First setup
+Profiles are checked strictly. An unknown or misspelled key, a missing required key, or a bad
+value stops the command with a message naming the section and the allowed keys.
 
-On a new local checkout, create the files without replacing any existing settings:
+## Settings reference
+
+| Section | Key | Meaning |
+| --- | --- | --- |
+| `[qic]` | `name`, `label` | Partner name (used in labels and institution lookup) and short label |
+| | `collaboration`, `ibm_name` | Optional display names; default `IBM–<name>` and `IBM` |
+| | `start_date` | Ignore papers published before this date (`YYYY-MM-DD`) |
+| | `workspace` | Folder for this QIC's history and outputs; never shared between QICs |
+| `[institutions]` | `ibm`, `partner` | OpenAlex institution IDs; a parent ID covers its labs through lineage |
+| `[topic]` | `terms` | Specific phrases that mark a paper on-topic. Used to search OpenAlex and arXiv, and to fill **Quantum?** = Yes |
+| | `broad_terms` | Optional broad words that mark **Quantum?** = Maybe when no phrase matched. Never searched |
+| | `arxiv_categories` | arXiv categories that count as on-topic (search and tag), e.g. `quant-ph` |
+| | `hardware_terms` | Phrases suggesting IBM hardware use; fill **IBM hardware (suggested)** for papers with no IBM author |
+| `[search]` | `arxiv_window_days` | How far back weekly runs look on arXiv (default 90) |
+| | `arxiv_phrases` | Extra arXiv phrases (any field) that find partner papers besides people |
+| | `common_names` | Names shared by many researchers; a paper matched only by these is marked uncertain |
+| | `skip_types` | OpenAlex work types to ignore (default: datasets, software, editorials and similar) |
+| | `arxiv_query_override` | Expert use: a complete hand-written arXiv query replacing the generated one |
+| `[matching]` | `auto_link`, `review` | Title similarity (0–100) to merge versions automatically / ask a person |
+| | `year_window` | Years a journal version may differ from its preprint |
+| `[[people]]` | `name`, `side` | One entry per person. `side = "partner"` finds papers; `side = "ibm"` only confirms them |
+| | `aliases` | Other spellings seen on papers |
+| | `orcid` | Optional ORCID ID |
+| | `tab` | `"backup"` sends papers found only through this person to the Backup sheet |
+
+The private master workbook path is never part of a profile. Set `PUBMON_MASTER` in `.env`
+or pass `--master <path>`.
+
+## How the arXiv search is built
+
+The tool builds the arXiv query from the profile, so each name is written once:
+
+```text
+( au:"<each partner spelling>" OR all:"<each arxiv phrase>" )
+AND ( cat:<each arxiv category> OR all:"<each topic term>" )
+```
+
+`check-profile` prints the exact query. A test pins the Cleveland Clinic query: it must keep
+every clause of the original hand-written feed, and any addition must be deliberate. Use
+`arxiv_query_override` only when the generated form cannot express what you need.
+
+## How OpenAlex is searched
+
+- **Pair search:** papers with at least one IBM-affiliated and one partner-affiliated author.
+  This finds collaborations on any topic.
+- **Partner + topic search:** partner papers whose title or abstract contains a topic term.
+  Terms are sent in groups of five, because OpenAlex throttles searches with more operators;
+  multi-word terms are quoted as exact phrases.
+
+## Finding institution IDs
 
 ```powershell
-if (!(Test-Path config/settings.toml)) { Copy-Item config/settings.example.toml config/settings.toml }
-if (!(Test-Path .env)) { Copy-Item .env.example .env }
-notepad config/settings.toml
-notepad .env
+pubmon --profile <name> resolve-institutions "Partner Name" "IBM"
 ```
 
-In the private `.env`, fill the key and your own API contact email:
+This lists candidates and never edits files. Confirm each ID and its lineage on
+[openalex.org](https://openalex.org/) before adding it.
 
-```dotenv
-OPENALEX_API_KEY=your_openalex_key_here
-PUBMON_EMAIL=your_contact_email_here
-```
+## Older `config/settings.toml` format
 
-Do not commit that file or paste the key into chat. For the current owner's cloud checkout,
-the supplied contact email has been filled privately; it is absent from GitHub. New local
-clones do not receive ignored private files, so set the email/key on each machine or use
-secure environment settings. Only OpenAlex needs a key for these public API requests.
+Existing installs with a local `config/settings.toml` keep working when no profile is named;
+the command logs a reminder to switch. Its legacy forms (`cc_institution_ids`, `query_file`,
+`watchlist_file`, side `CC`) also still load. `config/settings.example.toml`,
+`config/arxiv_query.txt` and `config/watchlist.example.csv` remain for those installs and the
+automated tests. New setups should use profiles.
 
-## The current CCF profile
+## Remaining limits
 
-`config/settings.example.toml` is a complete public CCF starting profile. It includes the
-existing arXiv query verbatim and the original public Clinic author names. No CSV or separate
-query-file edit is needed for the new profile. Add confirmed public IBM authors and review
-common-name ambiguity; their names are not guessed automatically.
-
-| Section | Customize |
-| --- | --- |
-| Top-level dates | `start_date`, `arxiv_window_days` |
-| `[collaboration]` | `name`, `partner_name`, `partner_label`, `ibm_name` |
-| `[storage]` | `workspace`: history, backups, logs, raw responses, outputs and demo history root |
-| `[openalex]` | IBM and `partner_institution_ids`, `quantum_terms`, `skip_types` |
-| `[arxiv]` | Inline multiline `query`, inline `watchlist`, `common_names` |
-| `[matching]` | `auto_link`, `review`, `year_window` |
-| `[master]` | Local `path`, or override with `--master` |
-
-Institution lookup can use the names already in your profile:
-
-```powershell
-pubmon resolve-institutions
-```
-
-This only lists candidates. Confirm the institution IDs/scope and edit the profile yourself.
-The watchlist uses `side = "IBM"` or `side = "PARTNER"`; `arxiv_name` is the exact public name
-used for arXiv matching, and optional `orcid` is a string. The entire query is explicit and is
-never regenerated from labels, preventing silent changes to a proven search.
-
-## Reuse for another QIC
-
-Copy the complete template into that QIC's local `config/settings.toml`, then change its
-collaboration names/label, verified partner institution IDs, dates, complete query and public
-author list. Use a **separate workspace** before collecting that QIC's records:
-
-```toml
-[storage]
-workspace = "workspaces/my-qic"
-```
-
-Paths for configuration files and the master remain relative to the project directory;
-`storage.workspace` controls runtime history/output location only. With the example above,
-live history is `workspaces/my-qic/data/pubmon.db`, live outputs are under
-`workspaces/my-qic/out/`, and synthetic replay is under `workspaces/my-qic/demo/`.
-`status`, decision import and back-testing use the same workspace automatically.
-
-Changing a partner does not erase or filter previous history. Use a fresh workspace for each
-QIC, or a separate project checkout; do not reuse CCF's database for another partner.
-Private environment credentials are project/process-specific; use separate private `.env`
-files or environment bindings if different deployments need different contacts or keys.
-
-## Compatibility and remaining limits
-
-Existing profiles using `openalex.cc_institution_ids`, `arxiv.query_file`, or
-`arxiv.watchlist_file` still load. Legacy watchlist side `CC` is accepted as `PARTNER`.
-Specify either inline query/watchlist or its legacy file reference, not both; ambiguous
-settings fail explicitly. Existing CCF storage defaults to the checkout root, preserving its
-current database/output paths.
-
-The persisted lane key `clinic_quantum` and internal compatibility field `cc_institution_ids`
-remain for old history/tests, but discovery uses the configured partner's institution IDs.
-They do not restrict collection to Cleveland Clinic.
-
-Workbook reconciliation still requires the current approved 36-column template and its
-manual-field protections. Supporting a QIC's different workbook layout requires a reviewed
-mapping change; changing the partner profile alone does not add arbitrary column layouts.
-One-row-per-paper output and protected-field rules apply to every profile.
-
-Live API validation and real-world recall remain pending; passing a synthetic profile test
-is not validation of another QIC's institution scope, authors or query.
+- Workbook reconciliation requires the approved 36-column master template
+  (`docs/MASTER_COLUMNS.md`). A QIC with a different layout needs a reviewed column mapping.
+- The lane key `clinic_quantum` keeps its historical name in stored history; it searches the
+  profile's partner institutions, whatever the QIC.
+- Live API validation and real-world recall checks are still pending.

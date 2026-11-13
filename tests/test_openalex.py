@@ -194,3 +194,15 @@ def test_query_uses_configured_partner_institutions(monkeypatch, source_settings
     query = parse_qs(urlsplit(urls[0]).query)
     assert "authorships.institutions.lineage:I999777" in query["filter"][0]
     assert "I1316902750" not in query["filter"][0]
+
+
+def test_topic_terms_become_small_quoted_searches(source_settings):
+    from dataclasses import replace
+
+    terms = ("quantum computing", "qubit", "quantum-centric", "Qiskit", "a", "b", "c")
+    searches = openalex.term_searches(replace(source_settings, quantum_terms=terms))
+    assert searches == [
+        '"quantum computing" OR qubit OR "quantum-centric" OR Qiskit OR a',
+        "b OR c",
+    ]
+    assert all(search.count(" OR ") <= 4 for search in searches)

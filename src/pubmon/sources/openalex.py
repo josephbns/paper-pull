@@ -68,13 +68,23 @@ def fetch_clinic_quantum(
         if not settings.partner_institution_ids or not settings.quantum_terms:
             raise LaneFailed(Lane.CLINIC_QUANTUM, "Clinic institutions and terms are required")
         records = {}
-        for clinic in settings.partner_institution_ids:
+        for clinic, search in product(settings.partner_institution_ids, term_searches(settings)):
             query = Works().filter(authorships={"institutions": {"lineage": clinic}})
-            # TODO(owner): verify this filter live before the first collection run.
-            query = query.search_filter(title_and_abstract=" OR ".join(settings.quantum_terms))
+            # TODO(owner): verify quoted phrases live; OpenAlex documents "..." as exact phrase.
+            query = query.search_filter(title_and_abstract=search)
             query = query.filter(from_publication_date=settings.start_date)
             records.update((item["id"], item) for item in _pages(query, Lane.CLINIC_QUANTUM))
         return _papers(list(records.values()), settings, Lane.CLINIC_QUANTUM, report)
+
+
+def term_searches(settings: Settings, per_search: int = 5) -> list[str]:
+    """Split the topic terms into small OR-searches, quoting multi-word phrases.
+
+    OpenAlex throttles searches with more than five boolean operators, so a long term list
+    becomes several searches whose results are combined.
+    """
+    terms = [f'"{term}"' if " " in term or "-" in term else term for term in settings.quantum_terms]
+    return [" OR ".join(terms[i : i + per_search]) for i in range(0, len(terms), per_search)]
 
 
 def _papers(records: list[Raw], settings: Settings, lane: Lane, report: FetchReport) -> list[Work]:

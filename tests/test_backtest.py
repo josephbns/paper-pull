@@ -175,7 +175,15 @@ def test_backtest_cli_uses_demo_history_without_credentials(project, history, ca
     shutil.copyfile(history, destination)
     monkeypatch.delenv("OPENALEX_API_KEY", raising=False)
     monkeypatch.delenv("PUBMON_EMAIL", raising=False)
-    prefix = ["--project-dir", str(project.project_dir), "backtest", "--master", str(MASTER)]
+    prefix = [
+        "--project-dir",
+        str(project.project_dir),
+        "--profile",
+        "cleveland-clinic",
+        "backtest",
+        "--master",
+        str(MASTER),
+    ]
     assert cli.main(prefix + ["--demo", "--since", "2023-01-01"]) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["found_rows"] == 5 and Path(result["path"]).is_file()

@@ -1,6 +1,7 @@
 """Explain selection using stored public affiliations and explicit watchlist matches."""
 
 import json
+import re
 
 from pubmon.config import Settings
 from pubmon.normalize import normalize_title
@@ -9,6 +10,8 @@ from pubmon.sources.common import entity_id
 from pubmon.store import Store
 
 SUMMARY_FIELDS = [
+    "Quantum?",
+    "IBM hardware (suggested)",
     "Why selected",
     "Discovery routes",
     "Partner affiliation authors",
@@ -93,6 +96,49 @@ def _join(items) -> str:
     return "; ".join(sorted({item for item in items if item}))
 
 
+def source_text(raw: dict) -> str:
+    """Return a source record's title and abstract (arXiv summary or OpenAlex word index)."""
+    title = raw.get("title") or raw.get("display_name") or ""
+    abstract = raw.get("summary") or ""
+    index = raw.get("abstract_inverted_index") or {}
+    if index:
+        # OpenAlex stores abstracts as {word: [positions]}; rebuild the text in order.
+        placed = sorted((spot, word) for word, spots in index.items() for spot in spots)
+        abstract = " ".join(word for _, word in placed)
+    return f"{title} {abstract}"
+
+
+def find_terms(text: str, terms: tuple[str, ...]) -> list[str]:
+    """Return the terms that appear in the text as whole words, ignoring case."""
+    found = []
+    for term in terms:
+        # Word edges stop "qubit" matching inside "qubits2" and "IBM Eagle" inside "IBM Eagles".
+        if re.search(rf"(?<![\w-]){re.escape(term)}(?![\w-])", text, flags=re.IGNORECASE):
+            found.append(term)
+    return found
+
+
+def _tags(row: dict, texts: list[str], categories: set[str], settings: Settings) -> None:
+    """Add the Quantum? and IBM hardware columns, and choose the output tab."""
+    text = " ".join(texts)
+    on_topic = bool(
+        find_terms(text, settings.tag_terms) or categories & set(settings.topic_categories)
+    )
+    ibm_seen = row["IBM affiliations"] or row["IBM watchlist matches"]
+    hardware = [] if ibm_seen else find_terms(text, settings.hardware_terms)
+    matches = row["Partner watchlist matches"] + "; " + row["IBM watchlist matches"]
+    watched = {normalize_title(name) for name in matches.split("; ") if name}
+    backup_spellings = {normalize_title(name) for name in settings.backup_names}
+    affiliated = row["IBM affiliations"] or row["Partner affiliations"]
+    # Backup only when every matched person is a backup person and no affiliation is reported.
+    backup = bool(watched) and watched <= backup_spellings and not affiliated
+    # "Maybe" catches on-topic papers whose wording the specific phrases miss.
+    maybe = not on_topic and bool(find_terms(text, settings.broad_terms))
+    row["Quantum?"] = "Yes" if on_topic else "Maybe" if maybe else "No"
+    row["IBM hardware (suggested)"] = "Check: mentions " + ", ".join(hardware) if hardware else ""
+    row["tab"] = "Backup" if backup else "Main"
+
+
 def _summary(
     row: dict, details: list[dict], routes: set[str], settings: Settings, links: set[str]
 ) -> None:
@@ -106,9 +152,10 @@ def _summary(
             f"OpenAlex query: {settings.ibm_name} + {settings.partner_name} institution lineages"
         )
     if "clinic_quantum" in routes:
-        reasons.append(
-            f"OpenAlex query: {settings.partner_name} + title/abstract terms ({', '.join(settings.quantum_terms)})"
+        terms = ", ".join(settings.quantum_terms[:3]) + (
+            ", …" if len(settings.quantum_terms) > 3 else ""
         )
+        reasons.append(f"OpenAlex query: {settings.partner_name} + title/abstract terms ({terms})")
     if "arxiv_feed" in routes:
         reasons.append("arXiv configured query; query/name matches are not proof of affiliation")
     if not reasons:
@@ -151,10 +198,12 @@ def add_selection_evidence(rows: list[dict], store: Store, settings: Settings) -
     )
     for row in rows:
         details, routes = [], set(filter(None, row.get("lanes", "").split("; ")))
-        links = set()
+        links, texts, categories = set(), [], set()
         for record in store.list_source_records(row["work_key"]):
             routes.add(record["lane"])
             raw = json.loads(record["raw_json"])
+            texts.append(source_text(raw))
+            categories.update(raw.get("categories") or [])
             if record["source"] == "openalex":
                 links.add("https://openalex.org/" + entity_id(raw["id"]))
                 details.extend(_affiliations(raw, settings, row["work_key"], row["title"]))
@@ -165,3 +214,4 @@ def add_selection_evidence(rows: list[dict], store: Store, settings: Settings) -
                 )
         details = list({tuple(item.items()): item for item in details}.values())
         _summary(row, details, routes, settings, links)
+        _tags(row, texts or [row["title"]], categories, settings)

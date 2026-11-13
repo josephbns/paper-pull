@@ -3,6 +3,8 @@
 from pubmon import cli
 from pubmon.sources.common import LaneFailed
 
+PROFILE_ARGS = ["--profile", "cleveland-clinic"]
+
 
 def test_resolve_institutions_prints_candidates_without_changing_config(
     source_settings,
@@ -32,6 +34,8 @@ def test_resolve_institutions_prints_candidates_without_changing_config(
             [
                 "--project-dir",
                 str(source_settings.project_dir),
+                "--profile",
+                "cleveland-clinic",
                 "resolve-institutions",
                 "Cleveland Clinic",
                 "IBM",
@@ -51,7 +55,15 @@ def test_resolve_institutions_failure_returns_nonzero(source_settings, monkeypat
 
     monkeypatch.setattr(cli, "lookup_institutions", fail)
     assert (
-        cli.main(["--project-dir", str(source_settings.project_dir), "resolve-institutions", "IBM"])
+        cli.main(
+            [
+                *PROFILE_ARGS,
+                "--project-dir",
+                str(source_settings.project_dir),
+                "resolve-institutions",
+                "IBM",
+            ]
+        )
         == 1
     )
     assert "run_id=" in caplog.text and "HTTP 503" in caplog.text
@@ -69,9 +81,13 @@ def test_missing_openalex_credentials_fail_without_fetch(monkeypatch, caplog, tm
     (tmp_path / "config").mkdir()
     source = Path(__file__).resolve().parents[1] / "config/settings.example.toml"
     shutil.copyfile(source, tmp_path / "config/settings.example.toml")
+    shutil.copytree(source.parents[1] / "profiles", tmp_path / "profiles")
     monkeypatch.delenv("OPENALEX_API_KEY", raising=False)
     monkeypatch.delenv("PUBMON_EMAIL", raising=False)
-    assert cli.main(["--project-dir", str(tmp_path), "resolve-institutions", "IBM"]) == 1
+    assert (
+        cli.main([*PROFILE_ARGS, "--project-dir", str(tmp_path), "resolve-institutions", "IBM"])
+        == 1
+    )
     assert "Missing environment variables" in caplog.text
 
 
@@ -84,6 +100,14 @@ def test_institution_lookup_defaults_to_profile_names(source_settings, monkeypat
 
     monkeypatch.setattr(cli, "lookup_institutions", lookup)
     assert (
-        cli.main(["--project-dir", str(source_settings.project_dir), "resolve-institutions"]) == 0
+        cli.main(
+            [
+                *PROFILE_ARGS,
+                "--project-dir",
+                str(source_settings.project_dir),
+                "resolve-institutions",
+            ]
+        )
+        == 0
     )
     assert calls == [[source_settings.partner_name, source_settings.ibm_name]]

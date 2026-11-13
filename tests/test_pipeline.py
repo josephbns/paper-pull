@@ -210,7 +210,7 @@ def test_multiple_changes_one_row(project, tmp_path):
 
 
 def test_cli_run_and_status_are_usable_offline(project, capsys):
-    prefix = ["--project-dir", str(project.project_dir)]
+    prefix = ["--project-dir", str(project.project_dir), "--profile", "cleveland-clinic"]
     assert cli.main(prefix + ["run", "--no-master", "--fixtures", str(FIXTURES)]) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["papers"] == 3
@@ -311,7 +311,12 @@ def test_demo_replay_never_creates_live_history(project, capsys):
     assert (project.project_dir / "demo/data/pubmon.db").exists()
     assert not (project.project_dir / "data").exists()
     assert not (project.project_dir / "out").exists()
-    assert cli.main(["--project-dir", str(project.project_dir), "status"]) == 0
+    assert (
+        cli.main(
+            ["--project-dir", str(project.project_dir), "--profile", "cleveland-clinic", "status"]
+        )
+        == 0
+    )
     assert json.loads(capsys.readouterr().out) == []
 
 

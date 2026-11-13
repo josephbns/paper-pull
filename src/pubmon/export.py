@@ -111,6 +111,25 @@ def _duplicates(store: Store, key: str) -> str:
     return "; ".join(descriptions)
 
 
+def _preprints(normalized: list[dict]) -> dict[str, str]:
+    """Keep preprint details beside the one paper row: arXiv date and other preprint links."""
+    arxiv_dates = sorted(work["pub_date"] for work in normalized if work["source"] == "arxiv")
+    others = sorted(
+        {
+            "https://doi.org/" + work["doi"]
+            for work in normalized
+            if work["type"] == "preprint"
+            and work.get("doi")
+            and not work.get("arxiv_id")
+            and not work["doi"].startswith("10.48550/arxiv")  # arXiv's own DOIs: arXiv column
+        }
+    )
+    return {
+        "arxiv_date": arxiv_dates[0] if arxiv_dates else "",
+        "other_preprints": "; ".join(others),
+    }
+
+
 def paper_row(store: Store, key: str, run_id: str, master: list[MasterRow], lanes: dict) -> dict:
     """Build one paper row, independently of how many events or source records it has."""
     state = store.get_work_state(key) or store.get_work(key)
@@ -140,6 +159,7 @@ def paper_row(store: Store, key: str, run_id: str, master: list[MasterRow], lane
         reviewer_note="",
         all_authors="; ".join(author["name"] for author in authors),
         review_events="; ".join(sorted({event["kind"] for event in store.list_events(key)})),
+        **_preprints(normalized),
     )
     row["arxiv_id"] = "arXiv:" + str(row["arxiv_id"]) if row["arxiv_id"] else ""
     row["link"] = (

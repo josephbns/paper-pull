@@ -1,3 +1,5 @@
+# OLDER FORMAT, kept for existing installs and automated tests.
+# New setups use profiles/<name>.toml instead (see docs/SETUP.md).
 # One collaboration profile: copy to config/settings.toml (git-ignored).
 # Put private API keys and contact email in .env / process variables, never here.
 # Legacy separate query/watchlist files still work, but are not used by this profile.

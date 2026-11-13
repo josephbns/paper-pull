@@ -1,0 +1,54 @@
+# Blank QIC profile. Copy this file to profiles/<your-qic>.toml (lowercase, hyphens),
+# replace every TODO, then check it with:
+#     pubmon check-profile --profile <your-qic>
+# See docs/SETUP.md for the full walkthrough and profiles/cleveland-clinic.toml for a
+# complete working example.
+#
+# Public criteria only. API keys, email addresses and the path to your real master
+# workbook go in your private .env file, never here.
+
+[qic]
+name = "TODO Partner Institution"    # e.g. "Cleveland Clinic"
+label = "TODO"                       # short label, e.g. "CCF"
+start_date = "2021-01-01"            # ignore papers published before this date
+workspace = "workspaces/TODO"        # this QIC's own history folder; never share one
+
+[institutions]
+# OpenAlex institution IDs (they start with I). Find candidates with:
+#     pubmon resolve-institutions --profile <your-qic> "Partner Name" "IBM"
+# Confirm each one on openalex.org before using it.
+ibm = ["I1341412227"]                # IBM parent ID used by the Cleveland Clinic profile
+partner = ["TODO"]
+
+[topic]
+# Specific phrases that make a paper on-topic (they search, and fill the "Quantum?" column).
+terms = [
+  "quantum computing", "quantum computer", "quantum hardware", "quantum processor",
+  "quantum circuit", "quantum algorithm", "quantum machine learning", "Qiskit", "qubit",
+]
+broad_terms = ["quantum"]           # marks "Maybe" when no phrase matched; never searched
+arxiv_categories = ["quant-ph"]
+# Phrases suggesting IBM hardware use; they only flag papers with no IBM author.
+hardware_terms = ["IBM Quantum System One", "IBM quantum computer", "IBM quantum processor"]
+
+[search]
+arxiv_window_days = 90
+arxiv_phrases = ["TODO Partner Institution"]   # also search arXiv text for these phrases
+common_names = []                              # names shared by many researchers
+
+[matching]
+auto_link = 95
+review = 85
+year_window = [-1, 3]
+
+# One entry per person, listed once. Only names already on public collaboration papers.
+# side = "partner" finds papers; side = "ibm" only confirms them.
+
+[[people]]
+name = "TODO Firstname Lastname"
+side = "partner"
+aliases = []                         # other spellings, e.g. ["Firstname M. Lastname"]
+
+[[people]]
+name = "TODO IBM Firstname Lastname"
+side = "ibm"

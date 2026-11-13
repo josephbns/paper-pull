@@ -18,7 +18,7 @@ Prompts for each session are in `CODEX_PROMPT.md`.
 ### After milestone 6 (owner, on an IBM machine, with internet)
 
 1. Get a free OpenAlex key; set `OPENALEX_API_KEY` and `PUBMON_EMAIL`.
-2. Copy `config/settings.example.toml` to `config/settings.toml`. The parent institution IDs are pre-filled (checked live 12 Nov); run `pubmon resolve-institutions "Cleveland Clinic" "IBM"` only to decide on the extra entities listed in its TODO (IBM Japan, Cleveland Clinic Abu Dhabi, etc.).
+2. Use `profiles/cleveland-clinic.toml` (`pubmon --profile cleveland-clinic check-profile`). The parent institution IDs are pre-filled (checked live 12 Nov); run `pubmon --profile cleveland-clinic resolve-institutions "Cleveland Clinic" "IBM"` only to decide on the extra entities listed in its TODO (IBM Japan, Cleveland Clinic Abu Dhabi, etc.).
 3. Record real cassettes once: `pytest --record-mode=once`. Check that no key appears in `tests/cassettes/`.
 4. `pubmon run --backfill --master <path to real master>`.
 5. `pubmon backtest --master <path> --since 2023-01-01`. This is the V1 gate below.
