@@ -12,6 +12,7 @@ from pubmon import export
 from pubmon.config import Settings
 from pubmon.log import run_logging
 from pubmon.master import read_master
+from pubmon.master_export import write_master
 from pubmon.match import resolve_and_store
 from pubmon.models import EventKind, Source, Work, WorkType
 from pubmon.normalize import normalize_ids
@@ -183,6 +184,9 @@ def _export(
         export.write_snapshot(snapshot, _available(root / "out", "works", day, run_id, ".csv"))
         if xlsx:
             export.write_xlsx(rows, candidate.with_suffix(".xlsx"))
+            generated = _available(root / "out", "master", day, run_id, ".xlsx")
+            write_master(snapshot, generated)
+            paths["master"] = str(generated)
         # A failure before all renames leaves every affected event pending for retry.
         with store.transaction():
             store.mark_events_exported(event_ids, run_id)
