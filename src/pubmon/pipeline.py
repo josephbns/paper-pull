@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pubmon import export
 from pubmon.config import Settings
+from pubmon.evidence import add_selection_evidence
 from pubmon.log import run_logging
 from pubmon.master import read_master
 from pubmon.master_export import write_master
@@ -172,7 +173,14 @@ def _available(out: Path, stem: str, day: str, run_id: str, suffix: str) -> Path
 
 
 def _export(
-    store: Store, root: Path, run_id: str, master: list, lanes: dict, xlsx: bool, dry_run: bool
+    store: Store,
+    root: Path,
+    run_id: str,
+    master: list,
+    lanes: dict,
+    xlsx: bool,
+    dry_run: bool,
+    settings: Settings,
 ) -> dict:
     rows, event_ids = export.candidate_rows(store, run_id, master, lanes)
     snapshot = export.snapshot_rows(store, run_id, master, lanes)
@@ -184,6 +192,7 @@ def _export(
         export.write_snapshot(snapshot, _available(root / "out", "works", day, run_id, ".csv"))
         if xlsx:
             export.write_xlsx(rows, candidate.with_suffix(".xlsx"))
+            add_selection_evidence(snapshot, store, settings)
             generated = _available(root / "out", "master", day, run_id, ".xlsx")
             write_master(snapshot, generated)
             paths["master"] = str(generated)
@@ -273,6 +282,7 @@ def _execute(
             lanes,
             xlsx,
             dry_run,
+            settings,
         )
         status = (
             "partial"
