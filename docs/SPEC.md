@@ -28,6 +28,17 @@ Crossref's explicit preprint classification overrides publication inferred from 
 DOI on arXiv, including correction of a previously inferred published state. Separate
 journal-publication evidence continues to establish published status.
 
+Owner-authorized evidence addition (2026-11-13): the original 36 columns remain first;
+selection rationale, discovery routes, partner author/institution evidence, IBM institution
+evidence, separate watchlist matches, evidence links and evidence status follow them.
+IBM Authors and CC and other Authors contain only OpenAlex-reported authorship affiliations
+matching configured IBM/partner institution IDs or lineage. Other authors remain in Authors.
+An Affiliation evidence sheet records author, side, institution name/ID, matched configured
+ID, evidence basis and source publication link. Watchlist name matches, including common-name
+ambiguity, remain distinct from source-reported affiliation. Query inclusion alone does not
+verify either side or partnership membership. Evidence covers stored linked versions and
+survives reruns without extra API calls; missing original routes are reported as unavailable.
+
 **In V1:** three discovery lanes (§4), Crossref enrichment, identity matching (§7), SQLite
 history (§5), read-only master reconciliation (§8), candidate CSV (§9), decision import (§10),
 CLI (§11), offline tests (§14).
