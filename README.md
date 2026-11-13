@@ -41,7 +41,15 @@ The generated master has a sortable, filtered **Publications** sheet in the appr
 and **Read me** notes. DOI/arXiv/PubMed/OpenAlex cells link to public records. It preserves
 uncertain duplicates as separate flagged rows and labels correction/retraction notices.
 It fills public metadata; official count, SOW, theme and other manual fields stay blank.
-All authors appear in Authors; IBM/partner author splits are not inferred. Review scope
+All authors appear in Authors. IBM Authors and CC and other Authors contain names with
+matching OpenAlex IBM/partner affiliations, respectively; other authors remain in Authors.
+After the original 36 columns, **Why selected**, **Discovery routes**, **Partner affiliation
+authors**, institution names, separate IBM/partner watchlist matches, evidence links and
+affiliation-evidence status explain each row. **Affiliation evidence** provides the matched
+author, institution ID/lineage, configured profile ID and source publication link. Partner
+columns refer to CCF by default and follow the configured partner profile. Name matches and
+query inclusion alone never establish affiliation; missing ties remain unverified.
+Evidence may come from any stored linked publication version. Review scope
 flags before treating the collected set as confirmed collaboration publications.
 AUTO Pub IDs are stable within a history database, but change on fresh GitHub backfills.
 
