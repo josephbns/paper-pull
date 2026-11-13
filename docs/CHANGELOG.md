@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-11-13 — New generated master workbook (owner-authorized scope)
+
+- Added master_export.py: `--xlsx` creates a new master_<date>.xlsx with the approved
+  36-column Publications table, full-history Sources table, public hyperlinks, wrapped
+  text, frozen headers, date/ID formatting and usage notes. It includes all canonical
+  papers even on a zero-candidate rerun and refuses to overwrite an existing export.
+- Public metadata/all authors are filled. Manual count/SOW/theme/involvement columns and
+  unverified individual IBM/partner author splits stay blank. Scope uncertainty, duplicates,
+  corrections/retractions and prior exclusions are flagged instead of silently decided.
+  AUTO IDs derive from history keys, not existing master IDs; fresh backfills reset them.
+- Fixed Crossref-confirmed preprint DOIs misclassified as published through arXiv's DOI
+  field. Explicit registry evidence can correct that prior inference while separate journal
+  evidence remains published. Added PubMed/OpenAlex fallback links to paper exports.
+- GitHub artifacts now include the new master workbook alongside candidate Excel/CSV and
+  the public snapshot. No input workbook or manual/private data is copied or modified.
+- Validation: 197 offline tests passed, 2 optional recordings skipped; lint, formatting,
+  synthetic dry run and generated-master fixture backfill passed. Tests cover full-history
+  reruns, input immutability, formula-safe text, hyperlinks, review flags and no overwrites.
+- Existing owner TODOs remain: institution scope, IBM watchlist/common names and real-world
+  recall. No new dependencies, institution IDs or matching thresholds were introduced.
+
 ## 2026-11-13 — Crossref absence during live backfill
 
 - GitHub run 43476018062 verified both repository secrets, passed all three fresh live
