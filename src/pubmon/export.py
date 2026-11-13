@@ -138,6 +138,8 @@ def paper_row(store: Store, key: str, run_id: str, master: list[MasterRow], lane
         first_seen=store.get_work(key)["first_seen"],
         decision="",
         reviewer_note="",
+        all_authors="; ".join(author["name"] for author in authors),
+        review_events="; ".join(sorted({event["kind"] for event in store.list_events(key)})),
     )
     row["arxiv_id"] = "arXiv:" + str(row["arxiv_id"]) if row["arxiv_id"] else ""
     row["link"] = (
@@ -145,6 +147,11 @@ def paper_row(store: Store, key: str, run_id: str, master: list[MasterRow], lane
         if row["doi"]
         else ("https://arxiv.org/abs/" + str(state["arxiv_id"]) if state.get("arxiv_id") else "")
     )
+    if not row["link"]:
+        if row["pmid"]:
+            row["link"] = "https://pubmed.ncbi.nlm.nih.gov/" + str(row["pmid"]) + "/"
+        elif row["openalex_id"]:
+            row["link"] = "https://openalex.org/" + str(row["openalex_id"])
     return row
 
 
