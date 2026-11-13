@@ -4,6 +4,7 @@ import csv
 from pathlib import Path
 
 import pytest
+from vcr import VCR
 
 from pubmon.config import load_config
 from pubmon.sources import arxiv_src, crossref, openalex
@@ -18,7 +19,8 @@ def recording_settings(
     """Skip unrecorded API checks unless the owner explicitly enables recording."""
     if disable_recording:
         pytest.skip("Optional API recordings disabled")
-    cassette = Path(vcr_cassette_dir) / default_cassette_name
+    # pytest-recording adds this suffix before saving or loading the cassette.
+    cassette = Path(VCR.ensure_suffix(".yaml")(str(Path(vcr_cassette_dir) / default_cassette_name)))
     recording = record_mode != "none"
     if not recording and not cassette.exists():
         pytest.skip("No recorded cassette yet; see README recording instructions")
