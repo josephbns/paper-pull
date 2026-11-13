@@ -37,7 +37,7 @@ def test_one_row_per_paper(project):
     assert "LINKED_PREPRINT" in combined["events"]
     workbook = load_workbook(Path(result["paths"]["candidates"]).with_suffix(".xlsx"))
     headers = [cell.value for cell in workbook.active[1]]
-    assert headers == export.COLUMNS
+    assert headers == export.REVIEW_ORDER and sorted(headers) == sorted(export.COLUMNS)
     for row in workbook.active.iter_rows(min_row=2):
         assert row[headers.index("arxiv_id")].number_format == "@"
     workbook.close()

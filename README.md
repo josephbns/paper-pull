@@ -39,6 +39,9 @@ run and download the `publication-candidates-<profile>-<run number>` artifact un
 open **`master_<date>.xlsx`** for the complete generated tracker. The candidate `.xlsx`
 contains only new/changed papers. Downloads require signing in to GitHub.
 
+Both Excel files follow one house style (`src/pubmon/xlsx_style.py`): Arial 10, navy
+header row, black text for source data, blue for columns entered by hand, green for links,
+thin grey rules, frozen header and first column, and landscape pages that print one page wide.
 The generated master has a sortable, filtered **Publications** sheet in the approved
 36-column layout, a **Sources** sheet with all authors, identifiers and version history,
 and **Read me** notes. DOI/arXiv/PubMed/OpenAlex cells link to public records. It preserves
@@ -211,7 +214,9 @@ credentials; the explicitly offline demo in section 2 does not.
 
 ## 6. Review one row per paper
 
-Open the candidate CSV (UTF-8 with BOM) or its optional Excel copy. A linked paper carries
+Open the candidate CSV (UTF-8 with BOM) or its optional Excel copy. The Excel copy leads with
+the title, then the columns you fill in (`decision`, `reviewer_note`, in blue), with IDs last;
+its Read me sheet repeats these instructions. A linked paper carries
 both its journal DOI and arXiv ID. `events` lists distinct event kinds, `changes` includes all
 material changes, and `versions` describes source versions. A possible duplicate stays on
 its own row with `possible_duplicate_of`; it is not silently merged.

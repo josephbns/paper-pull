@@ -1,20 +1,21 @@
 """One-row-per-paper review exports with atomic file replacement."""
 
 import csv
+import html
 import json
 import os
+import re
 import tempfile
 from collections import defaultdict
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from openpyxl import Workbook
-
 from pubmon.diff import MATERIAL_FIELDS
 from pubmon.master import MasterRow, match_master
 from pubmon.models import EventKind
 from pubmon.store import Store
+from pubmon.xlsx_style import new_workbook, set_link, style_notes, style_table
 
 COLUMNS = [
     "candidate_id",
@@ -111,6 +112,11 @@ def _duplicates(store: Store, key: str) -> str:
     return "; ".join(descriptions)
 
 
+def display_text(value) -> str:
+    """Remove HTML tags and entities (e.g. "&amp;") that some sources leave in text."""
+    return html.unescape(re.sub(r"<[^>]+>", "", value)) if isinstance(value, str) else value
+
+
 def _preprints(normalized: list[dict]) -> dict[str, str]:
     """Keep preprint details beside the one paper row: arXiv date and other preprint links."""
     arxiv_dates = sorted(work["pub_date"] for work in normalized if work["source"] == "arxiv")
@@ -161,6 +167,7 @@ def paper_row(store: Store, key: str, run_id: str, master: list[MasterRow], lane
         review_events="; ".join(sorted({event["kind"] for event in store.list_events(key)})),
         **_preprints(normalized),
     )
+    row["title"], row["venue"] = display_text(row["title"]), display_text(row["venue"])
     row["arxiv_id"] = "arXiv:" + str(row["arxiv_id"]) if row["arxiv_id"] else ""
     row["link"] = (
         "https://doi.org/" + row["doi"]
@@ -240,22 +247,92 @@ def write_snapshot(rows: list[dict], path: Path) -> None:
     write_table(rows, path, SNAPSHOT_COLUMNS)
 
 
+# The Excel review copy leads with what a reviewer reads and fills in; IDs go last.
+# The CSV keeps the specified COLUMNS order, and decision import matches headers by name.
+REVIEW_ORDER = [
+    "title",
+    "pub_date",
+    "status",
+    "type",
+    "venue",
+    "events",
+    "changes",
+    "confidence",
+    "ibm_confirmed",
+    "decision",
+    "reviewer_note",
+    "lanes",
+    "matched_names",
+    "first_author",
+    "n_authors",
+    "versions",
+    "possible_duplicate_of",
+    "master_pub_id",
+    "match_method",
+    "doi",
+    "arxiv_id",
+    "pmid",
+    "openalex_id",
+    "link",
+    "sources",
+    "first_seen",
+    "candidate_id",
+    "work_key",
+]
+assert sorted(REVIEW_ORDER) == sorted(COLUMNS), "Review copy must hold every candidate column"
+
+CANDIDATE_NOTES = (
+    "Each row is one paper with new, changed or uncertain information since the last run.",
+    "Fill only the blue columns: decision and reviewer_note. Leave work_key, identifiers and headers unchanged.",
+    "decision values: accepted (remember acceptance); rejected or not_collab (suppress repeats until a material change); merge:<work_key> (combine with that paper); blank (no change).",
+    "To import, save a copy as CSV UTF-8 (not .xlsx) and run: pubmon import-decisions <file.csv>",
+    "events lists what happened (NEW, UPDATED, LINKED_PREPRINT, CORRECTION, RETRACTED, POSSIBLE_DUPLICATE); changes lists every changed field.",
+    "Identifiers link to their public records (green). The full set of papers is in the master workbook from the same run.",
+)
+
+
+def _review_value(name: str, value):
+    # Real dates sort and filter as dates in Excel; Yes/No reads better than TRUE/FALSE.
+    if name in {"pub_date", "first_seen"} and value:
+        return datetime.fromisoformat(str(value)[:10]).date()
+    if name == "ibm_confirmed":
+        return "Yes" if value else "No"
+    return value
+
+
 def write_xlsx(rows: list[dict], path: Path) -> None:
-    """Create a new review workbook with literal strings and text-formatted identifier cells."""
+    """Create a styled review workbook: literal strings, text IDs, links and a Read me sheet."""
 
     def write(temporary: Path) -> None:
-        workbook = Workbook()
+        workbook = new_workbook()
         sheet = workbook.active
         sheet.title = "Candidates"
-        sheet.append(COLUMNS)
+        sheet.append(REVIEW_ORDER)
         for row in rows:
-            sheet.append([row.get(name, "") for name in COLUMNS])
-        for cells in sheet.iter_rows():
-            for cell in cells:
-                if isinstance(cell.value, str):
-                    cell.data_type = "s"
-                if COLUMNS[cell.column - 1] in {"doi", "arxiv_id", "pmid", "openalex_id"}:
-                    cell.number_format = "@"
+            sheet.append([_review_value(name, row.get(name, "")) for name in REVIEW_ORDER])
+            link = sheet.cell(sheet.max_row, REVIEW_ORDER.index("link") + 1)
+            if str(link.value).startswith(("https://", "http://")):
+                set_link(link, link.value)
+        style_table(
+            sheet,
+            "CandidatesTable",
+            inputs={"decision", "reviewer_note"},
+            centered={"confidence", "ibm_confirmed", "status", "type"},
+            caps={
+                "title": 60,
+                "versions": 60,
+                "changes": 50,
+                "reviewer_note": 40,
+                "candidate_id": 22,
+                "work_key": 22,
+            },
+            tab="main",
+        )
+        day = datetime.now().strftime("%m/%d/%Y")
+        title = "Publication candidates for review"
+        subtitle = f"Generated {day} by pubmon · {len(rows)} papers"
+        notes = workbook.create_sheet("Read me")
+        style_notes(notes, title, subtitle, legend=True, notes=list(CANDIDATE_NOTES))
         workbook.save(temporary)
         workbook.close()
 

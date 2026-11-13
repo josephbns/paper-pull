@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-11-13 — Banking-style Excel formatting
+
+- Added xlsx_style.py, one house style for both Excel outputs: Arial 10 (also the workbook
+  default font), navy header row with white bold text, black for source data, blue for
+  hand-entry columns (the 15 manual master columns; decision and reviewer_note), green for
+  links, thin grey rules with gridlines off, mm/dd/yyyy dates, #,##0 counts, light row stripes.
+- Uniform 12.75 pt rows with top-anchored wrapping: each cell shows its first line and long
+  text no longer spills into empty neighbouring cells. Short columns fit their longest value;
+  long ones fit most values; headers always fit on two lines.
+- Print-ready: landscape, one page wide, header row repeated, sheet name and page numbers in
+  the footer. Tab colours separate main, supporting and notes sheets.
+- Read me sheets now have a title, generation details (date, profile, paper counts), a colour
+  key and numbered notes. The candidates workbook gained a Read me with review instructions,
+  leads with the title and the two review columns, shows real dates and Yes/No.
+- HTML leftovers from sources ("&amp;", italic tags) are removed from titles and venues.
+- Validation: 219 offline tests passed, 2 skipped; lint/format clean. Visual check by rendering
+  both workbooks rebuilt from the 13 Nov live output through LibreOffice.
+
 ## 2026-11-13 — Named QIC profiles, topic tags and setup guide (owner-approved scope)
 
 - Added profile.py and `profiles/`: one strictly checked, committed, public settings file per

@@ -194,7 +194,12 @@ def _export(
             export.write_xlsx(rows, candidate.with_suffix(".xlsx"))
             add_selection_evidence(snapshot, store, settings)
             generated = _available(root / "out", "master", day, run_id, ".xlsx")
-            write_master(snapshot, generated)
+            meta = {
+                "collaboration": settings.collaboration_name,
+                "profile": settings.profile_name,
+                "generated": datetime.now(UTC).date(),
+            }
+            write_master(snapshot, generated, meta)
             paths["master"] = str(generated)
         # A failure before all renames leaves every affected event pending for retry.
         with store.transaction():

@@ -369,6 +369,10 @@ first_seen, link, decision, reviewer_note
 - Optionally (`--xlsx`) also write the same rows to an `.xlsx` with ID columns formatted as
   text. This is a new file, never the master.
 
+The optional Excel review copy (`--xlsx`) holds the same columns in reading order
+(`export.REVIEW_ORDER`: title first, `decision`/`reviewer_note` early, IDs last) with real
+dates and Yes/No; decision import matches headers by name, so order does not matter.
+
 ### Snapshot: `out/works_<YYYY-MM-DD>.csv` — every paper, one row each
 
 Every work in the database, same columns as the candidate file minus `events`, `changes`,
