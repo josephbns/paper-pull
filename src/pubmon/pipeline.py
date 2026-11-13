@@ -54,6 +54,7 @@ def _enrich(
     collection.counts["crossref"] = {
         "status": "failed" if failures else "completed",
         "count": len(report.raw_records),
+        "skipped": dict(report.skipped),
         "errors": failures,
     }
     return result
