@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-11-13 — Publication selection and affiliation evidence
+
+- Added evidence.py to explain inclusion from stored public source records, current profile
+  institution IDs/lineage and watchlist. No extra network calls, private data or guessed names.
+- Generated master now fills IBM Authors and CC and other Authors with source-reported
+  IBM/partner affiliation matches. All other authors remain in Authors. Appended explicit
+  selection reasons/routes, partner author/institution evidence, IBM institutions, separate
+  watchlist matches, source links and evidence status after the existing 36 columns.
+- Added an Affiliation evidence sheet tracing each matched author to institution/profile
+  IDs, source publication and evidence basis. Watchlist matches (including common names)
+  never establish affiliation. Partner columns follow the profile (CCF by default), and
+  unverified ties/partnership scope remain review flags even when a query found the paper.
+- Evidence is rebuilt from stored linked versions on zero-candidate reruns. No changes to
+  selection queries, matching thresholds, workbook input handling or row identities.
+- Validation: 200 offline tests passed, 2 optional source recordings skipped. Lint,
+  formatting and synthetic workbook generation passed, including lineage/profile isolation,
+  name-only ambiguity, provenance links, rerun history and workbook affiliation columns.
+- Remaining owner TODOs: review institution scope, IBM watchlist/common names, collaboration
+  scope and recall. A new GitHub run is required to regenerate live master evidence.
+
 ## 2026-11-13 — New generated master workbook (owner-authorized scope)
 
 - Added master_export.py: `--xlsx` creates a new master_<date>.xlsx with the approved
