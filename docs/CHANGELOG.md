@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-13 — Crossref absence during live backfill
+
+- GitHub run 43476018062 verified both repository secrets, passed all three fresh live
+  source tests, and discovered 196 candidate papers. Collection was marked partial because
+  29 DOI enrichment requests returned Crossref HTTP 404; 129 enrichments succeeded.
+- Treat a DOI absent from Crossref as unavailable optional enrichment, retain its source
+  metadata, and count it in crossref.skipped.not_found. Other errors remain lane failures;
+  transient errors retain their retry behavior. No new dependencies or thresholds.
+- Added adapter and end-to-end regression coverage for absent DOI metadata versus forbidden
+  requests/service outages, including retained papers, generated Excel and run diagnostics.
+- Local validation: 193 passed, 2 optional recordings skipped; lint and formatting clean.
+  A new Actions run on the updated main branch is needed to verify the live backfill fix.
+
 ## 2026-11-13 — Manual GitHub public-source Excel generation
 
 - Added `.github/workflows/candidates.yml` with manual dispatch, read-only repository
