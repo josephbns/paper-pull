@@ -23,6 +23,29 @@ wait for work GitHub. It does not move the real workbook or internal data into t
 
 ## 1. Install on Windows PowerShell
 
+### Run manually on GitHub instead
+
+In repository Settings → Secrets and variables → Actions, add repository secrets
+`OPENALEX_API_KEY` and `PUBMON_EMAIL`. Do not put their values in repository files.
+
+Open **Actions → Generate candidate Excel → Run workflow**, select `main`, then click
+**Run workflow**. After it finishes, open that run and download the
+`publication-candidates-<run number>` artifact under **Artifacts**. Extract the ZIP and
+open its candidate `.xlsx`. Downloads require signing in to GitHub.
+
+The workflow runs offline tests, lint/format/dependency checks, a synthetic dry run, fresh
+live source tests, then `pubmon run --backfill --no-master --xlsx`. Source-test failure stops
+collection. A partial collection fails the workflow; any remaining files are incomplete.
+It uses only public source metadata and never reads or updates the real master workbook.
+Artifacts expire after 14 days; download the ones you need.
+
+Each manual run starts with fresh history, so it produces a new full backfill and can repeat
+papers from earlier runs. This is initial public-source validation and Excel generation;
+persistent weekly state and scheduling remain future work. The existing public profile
+still needs institution/watchlist review before relying on discovery coverage.
+
+### Install locally
+
 Install Python **3.11 or newer** from [python.org](https://www.python.org/downloads/windows/).
 Enable the installer option that adds Python to PATH. Install Git if needed from
 [git-scm.com](https://git-scm.com/downloads/win). Then open PowerShell:
