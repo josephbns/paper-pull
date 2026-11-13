@@ -1,5 +1,46 @@
 # Changelog
 
+## 2026-11-13 — Manual GitHub public-source Excel generation
+
+- Added `.github/workflows/candidates.yml` with manual dispatch, read-only repository
+  permissions, dependency/lint/format/offline checks, a synthetic dry run, fresh live source
+  recordings and public-source backfill with `--no-master --xlsx`.
+- Credentials are injected only from repository secrets into live steps. Artifacts contain
+  generated candidate Excel/CSV and public work snapshots, not secrets, logs, raw responses,
+  recordings, databases or master workbooks. Retention is 14 days.
+- Documented Actions launch/download steps and the fresh-history limitation: each run is a
+  full backfill, not a persistent incremental weekly monitor. Failed/partial collection is
+  shown as failure and any produced files are explicitly labeled incomplete.
+- Workflow syntax and embedded Python checked locally; offline suite, synthetic dry run,
+  lint and formatting passed. Live GitHub execution must verify the repository secrets.
+
+## 2026-11-13 — Offline verification and initial online checks
+
+- Installed the declared development dependencies in a local virtual environment;
+  dependency consistency, Ruff lint, formatting and whitespace checks passed.
+- Initial offline suite: 188 passed, 3 optional recordings skipped. The synthetic CLI
+  fixture dry-run completed with 3 papers/candidates, no persistent runtime directories,
+  and a byte-identical synthetic master. The real workbook was never accessed.
+- Recorded the credential-free arXiv known-ID source test successfully and inspected its
+  cassette: public metadata only, no API-key/contact query fields or authorization/User-Agent
+  headers. Fixed the recording fixture's existence check to include pytest-recording's
+  `.yaml` suffix; previously even an available cassette was silently skipped on replay.
+- Final network-blocked suite: 189 passed, 2 skipped. The new arXiv cassette now replays
+  offline. Reproduce with `python -m pytest -o addopts='' -q --block-network`,
+  `ruff check .`, `ruff format --check .`, and `python -m pip check`.
+  Reproduce the synthetic run with `pubmon run --dry-run --master
+  tests/fixtures/synthetic_master.xlsx --fixtures tests/fixtures/api`.
+- Public HTTPS probes returned HTTP 200 from OpenAlex and Crossref. The configured Clinic
+  title/abstract quantum filter returned 89 works with a one-record page, confirming filter
+  acceptance (not full pagination or relevance). Crossref returned the expected public DOI.
+- Blocked: OpenAlex/Crossref source-recording tests and a complete live pipeline rehearsal,
+  because OPENALEX_API_KEY and PUBMON_EMAIL are absent. Set them through environment settings
+  before `python -m pytest tests/test_source_recordings.py --record-mode=once`.
+  No credential values were printed or invented. No changes were pushed to GitHub.
+- Existing owner decisions remain: institution scope, IBM-side public watchlist authors,
+  common-name collisions, real-world recall on the approved machine, and weekly validation.
+  No new dependencies, matching thresholds or source behavior were introduced.
+
 ## 2026-11-12 — Milestone 1
 
 - Imported the supplied build pack into the existing personal GitHub checkout, excluding
