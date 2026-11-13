@@ -59,6 +59,42 @@ def test_rerun_exports_zero_candidates_and_preserves_review_file(project):
         assert len(store.list_works()) == 3
 
 
+@pytest.mark.parametrize(
+    "status, expected", [(404, "completed"), (403, "partial"), (503, "partial")]
+)
+def test_crossref_absence_preserves_papers_but_service_failures_stay_partial(
+    project, monkeypatch, status, expected
+):
+    from dataclasses import replace
+
+    import httpx2
+
+    from pubmon.sources import crossref
+
+    def get(url, **kwargs):
+        return httpx2.Response(status, request=httpx2.Request("GET", url))
+
+    def enrich(doi, settings, report, fixtures):
+        return crossref.enrich(
+            doi, replace(settings, email="synthetic@example.invalid"), report=report
+        )
+
+    monkeypatch.setattr(httpx2, "get", get)
+    monkeypatch.setattr(crossref._request.retry, "sleep", lambda _: None)
+    monkeypatch.setattr(sources, "enrich", enrich)
+    result = pipeline.run(project, no_master=True, fixtures=FIXTURES, xlsx=True)
+    assert result["status"] == expected
+    rows = records(result["paths"]["candidates"])
+    assert any(row["doi"] == "10.5555/synthetic-1" for row in rows)
+    assert Path(result["paths"]["candidates"]).with_suffix(".xlsx").is_file()
+    with Store(project.project_dir / "demo/data/pubmon.db") as store:
+        lane = json.loads(store.list_runs()[0]["counts_json"])["lanes"]["crossref"]
+        if status == 404:
+            assert lane["skipped"]["not_found"] > 0 and not lane["errors"]
+        else:
+            assert lane["status"] == "failed" and lane["errors"]
+
+
 def test_dry_run_leaves_no_database_or_exports(project):
     result = pipeline.run(project, no_master=True, dry_run=True, fixtures=FIXTURES)
     assert result["candidates"] == 3 and result["paths"] == {}
