@@ -55,6 +55,7 @@ def test_backup_people_and_topic_settings(workspace):
     assert "quantum computing" in settings.tag_terms and "quantum" not in settings.tag_terms
     assert settings.topic_categories == ("quant-ph",) and settings.broad_terms == ("quantum",)
     assert "ibm_cleveland" in settings.hardware_terms
+    assert "System One at the Cleveland Clinic" in settings.onsite_hardware
     assert settings.profile_name == PROFILE and settings.partner_label == "CCF"
 
 

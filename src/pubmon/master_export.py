@@ -37,6 +37,14 @@ WIDE = {
     "Review flag": 50,
     "Pub ID": 22,
 }
+# Paper sheets in workbook order; a row's tab (set in evidence.py) picks its sheet.
+SHEETS = ("Publications", "Hardware only", "Check tie", "Backup")
+SHEET_FOR_TAB = {
+    "Main": "Publications",
+    "Hardware only": "Hardware only",
+    "Check tie": "Check tie",
+    "Backup": "Backup",
+}
 LINKS = (
     ("DOI", "https://doi.org/"),
     ("arXiv", "https://arxiv.org/abs/"),
@@ -46,7 +54,9 @@ LINKS = (
 READ_ME = (
     "One row per paper, built only from public metadata (OpenAlex, arXiv, Crossref). It never copies or changes your own master workbook.",
     "Publications starts with the approved 36 columns, followed by preprint links, tags and selection/affiliation evidence columns. Sources retains version history.",
-    'Backup holds papers found only through people marked tab = "backup" in the profile, with no IBM or partner affiliation evidence.',
+    "Partner tie shows how each paper links to the partner: Author affiliation (a source reports a partner-affiliated author) or Named researcher (a profile partner person is an author; the source reports no affiliation). Publications holds only these papers.",
+    "Hardware only: no partner author, but the paper names the partner's on-site IBM system. Check tie: the partner is only mentioned, or no link was found; review before counting.",
+    'Backup holds papers found only through people marked tab = "backup" in the profile, with no partner tie.',
     "Quantum? is Yes when a profile topic phrase appears in a title or abstract or the arXiv category is a profile topic category, Maybe when only a broad word (such as quantum) appears, else No. It tags; it does not decide scope.",
     "IBM hardware (suggested) lists hardware phrases found in papers with no IBM author. It is a prompt to check, not a confirmation.",
     "Date for arXiv and arXiv describe the arXiv preprint of the paper; Other preprint links list bioRxiv, medRxiv and similar preprints.",
@@ -177,12 +187,13 @@ def _evidence(book, rows: list[dict]) -> None:
     )
 
 
-def _read_me(book, rows: list[dict], meta: dict) -> None:
-    backup = sum(1 for row in rows if row.get("tab") == "Backup")
+def _read_me(book, sheets: dict[str, list[dict]], meta: dict) -> None:
+    total = sum(len(rows) for rows in sheets.values())
+    counts = ", ".join(f"{len(rows)} {name}" for name, rows in sheets.items())
     subtitle = (
         f"Generated {meta.get('generated', date.today()):%m/%d/%Y} by pubmon"
         + (f" · profile {meta['profile']}" if meta.get("profile") else "")
-        + f" · {len(rows)} papers ({len(rows) - backup} Publications, {backup} Backup)"
+        + f" · {total} papers ({counts})"
     )
     title = f"{meta.get('collaboration', 'IBM collaboration')} publication master"
     style_notes(book.create_sheet("Read me"), title, subtitle, legend=True, notes=list(READ_ME))
@@ -197,14 +208,17 @@ def write_master(rows: list[dict], path: Path, meta: dict | None = None) -> None
     def write(temporary: Path) -> None:
         book = new_workbook()
         ordered = sorted(rows, key=lambda row: (row["pub_date"], row["title"]), reverse=True)
-        main = [row for row in ordered if row.get("tab", "Main") != "Backup"]
-        backup = [row for row in ordered if row.get("tab", "Main") == "Backup"]
+        sheets = {name: [] for name in SHEETS}
+        for row in ordered:
+            sheets[SHEET_FOR_TAB.get(row.get("tab", "Main"), "Check tie")].append(row)
         book.active.title = "Publications"
-        _publications(book.active, main, "PublicationsTable", "main")
-        _publications(book.create_sheet("Backup"), backup, "BackupTable", "supporting")
+        for number, (name, sheet_rows) in enumerate(sheets.items()):
+            sheet = book.active if number == 0 else book.create_sheet(name)
+            table = name.replace(" ", "") + "Table"
+            _publications(sheet, sheet_rows, table, "main" if number == 0 else "supporting")
         _sources(book, ordered)
         _evidence(book, ordered)
-        _read_me(book, ordered, meta or {})
+        _read_me(book, sheets, meta or {})
         book.save(temporary)
         book.close()
 

@@ -129,3 +129,28 @@ def test_tags_quantum_hardware_and_backup_tab(source_settings):
     backup = _tag_row(**{"Partner watchlist matches": "Synthetic Backup"})
     _tags(backup, ["Matchgate theory"], {"quant-ph"}, settings)
     assert backup["tab"] == "Backup" and backup["Quantum?"] == "Yes"
+
+
+def test_partner_tie_decides_which_sheet_a_paper_goes_to(source_settings):
+    from dataclasses import replace
+
+    from pubmon.evidence import _tags
+
+    settings = replace(
+        source_settings,
+        partner_name="Cleveland Clinic",
+        onsite_hardware=("ibm_cleveland",),
+        backup_names=("Synthetic Backup",),
+    )
+    cases = [
+        ({"Partner affiliations": "Cleveland Clinic"}, "", "Author affiliation", "Main"),
+        ({"Partner watchlist matches": "Synthetic Partner"}, "", "Named researcher", "Main"),
+        ({}, "Runs on ibm_cleveland", "On-site hardware only", "Hardware only"),
+        ({}, "Compared with work by Cleveland Clinic", "Mention only", "Check tie"),
+        ({}, "Unrelated text", "None found", "Check tie"),
+        ({"Partner watchlist matches": "Synthetic Backup"}, "Theory", "None found", "Backup"),
+    ]
+    for fields, text, tie, tab in cases:
+        row = _tag_row(**fields)
+        _tags(row, [text], set(), settings)
+        assert (row["Partner tie"], row["tab"]) == (tie, tab), fields

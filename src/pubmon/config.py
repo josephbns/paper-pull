@@ -53,6 +53,7 @@ class Settings:
     broad_terms: tuple[str, ...] = ()
     hardware_terms: tuple[str, ...] = ()
     backup_names: tuple[str, ...] = ()
+    onsite_hardware: tuple[str, ...] = ()
 
     @property
     def tag_terms(self) -> tuple[str, ...]:

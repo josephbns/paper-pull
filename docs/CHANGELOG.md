@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-13 — Every Publications row ties to the partner
+
+- New **Partner tie** column (evidence.partner_tie): Author affiliation, Named researcher,
+  On-site hardware only, Mention only, None found. Only the first two reach Publications.
+- New sheets: **Hardware only** (no partner author; the paper names the partner's IBM system,
+  from the profile's new `[qic] onsite_hardware`) and **Check tie** (mention only or no link).
+  Backup now holds backup-person-only papers without any partner tie.
+- Checked against the 13 Nov live output (rerun 22:11 UTC, main branch): 148 papers tie to
+  Cleveland Clinic through an author; 2 used ibm_cleveland only (QAOA, short-rate models);
+  1 only cites Clinic work ("Bridging the NISQ…"); 1 could not be verified (Pressure-Poisson);
+  44 are Strelchuk-only. AEGISS confirmed tied (Vijay Krishna, Cleveland Clinic Research).
+- Validation: 220 offline tests passed, 2 skipped; lint/format clean.
+
 ## 2026-11-13 — Banking-style Excel formatting
 
 - Added xlsx_style.py, one house style for both Excel outputs: Arial 10 (also the workbook

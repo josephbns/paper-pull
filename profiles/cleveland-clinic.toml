@@ -10,6 +10,11 @@ name = "Cleveland Clinic"            # partner name used in labels and lookups
 label = "CCF"                        # short label
 collaboration = "IBM–Cleveland Clinic"
 start_date = "2021-01-01"            # ignore papers published before this date
+# Names of the IBM system installed at the partner. A paper with no partner author that
+# names it goes to the "Hardware only" sheet instead of Publications.
+onsite_hardware = [
+  "ibm_cleveland", "System One at the Cleveland Clinic", "System One at Cleveland Clinic",
+]
 # Where history and outputs are stored. "." keeps the existing Cleveland Clinic history.
 # Every other QIC must use its own folder, such as "workspaces/<qic-name>".
 workspace = "."

@@ -450,7 +450,8 @@ Each QIC is one profile, `profiles/<name>.toml`, holding only public criteria; s
 it strictly (unknown keys, missing keys and bad values stop the command) and translates it
 into the same `Settings` object the older format produces.
 
-- `[qic]`: names, `start_date`, `workspace` (a separate history root per QIC).
+- `[qic]`: names, `start_date`, `workspace` (a separate history root per QIC), and
+  `onsite_hardware` (names of the IBM system at the partner).
 - `[institutions]`: OpenAlex `ibm` and `partner` institution IDs.
 - `[topic]`: `terms` (search + **Quantum?** = Yes), `broad_terms` (**Quantum?** = Maybe, never
   searched), `arxiv_categories`, `hardware_terms` (**IBM hardware (suggested)**).
@@ -460,6 +461,11 @@ into the same `Settings` object the older format produces.
 - `[[people]]`: each person once, with `side` (`partner` finds papers, `ibm` only confirms),
   `aliases`, optional `orcid`, and `tab` (`backup` routes papers found only through them to the
   Backup sheet).
+
+The generated master's Publications sheet holds only papers with a partner author tie (OpenAlex
+partner affiliation, or a profile partner person by name). On-site-hardware-only papers go to
+Hardware only; partner mentions and unlinked papers go to Check tie; backup-only papers to Backup
+(`evidence.partner_tie`, `master_export.SHEETS`).
 
 The arXiv query is generated from partner people, phrases, categories and topic terms. IBM
 people are excluded from the search because their names would pull in quantum papers

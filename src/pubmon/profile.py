@@ -21,7 +21,15 @@ PROFILE_DIR = "profiles"
 # ignored key silently falls back to a default (for example, the wrong workspace).
 ALLOWED = {
     "": {"qic", "institutions", "topic", "search", "matching", "people"},
-    "qic": {"name", "label", "start_date", "workspace", "collaboration", "ibm_name"},
+    "qic": {
+        "name",
+        "label",
+        "start_date",
+        "workspace",
+        "collaboration",
+        "ibm_name",
+        "onsite_hardware",
+    },
     "institutions": {"ibm", "partner"},
     "topic": {"terms", "broad_terms", "arxiv_categories", "hardware_terms"},
     "search": {
@@ -103,6 +111,7 @@ def load_profile(project_dir: Path | str, name: str) -> Settings:
         hardware_terms=tuple(raw["topic"].get("hardware_terms", [])),
         backup_names=tuple(s for p in people if p.tab == "backup" for s in p.spellings),
         master_path=_master_path(root),
+        onsite_hardware=tuple(raw["qic"].get("onsite_hardware", [])),
     )
 
 

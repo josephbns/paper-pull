@@ -27,6 +27,7 @@ value stops the command with a message naming the section and the allowed keys.
 | | `collaboration`, `ibm_name` | Optional display names; default `IBM–<name>` and `IBM` |
 | | `start_date` | Ignore papers published before this date (`YYYY-MM-DD`) |
 | | `workspace` | Folder for this QIC's history and outputs; never shared between QICs |
+| | `onsite_hardware` | Names of the IBM system at the partner (e.g. `ibm_cleveland`). Papers with no partner author that name it go to the **Hardware only** sheet |
 | `[institutions]` | `ibm`, `partner` | OpenAlex institution IDs; a parent ID covers its labs through lineage |
 | `[topic]` | `terms` | Specific phrases that mark a paper on-topic. Used to search OpenAlex and arXiv, and to fill **Quantum?** = Yes |
 | | `broad_terms` | Optional broad words that mark **Quantum?** = Maybe when no phrase matched. Never searched |
@@ -43,6 +44,16 @@ value stops the command with a message naming the section and the allowed keys.
 | | `aliases` | Other spellings seen on papers |
 | | `orcid` | Optional ORCID ID |
 | | `tab` | `"backup"` sends papers found only through this person to the Backup sheet |
+
+Every paper gets a **Partner tie**, and only an author tie reaches the Publications sheet:
+
+| Partner tie | Meaning | Sheet |
+| --- | --- | --- |
+| Author affiliation | A source (OpenAlex) reports a partner-affiliated author | Publications |
+| Named researcher | A `partner` person from the profile is an author; no affiliation reported | Publications |
+| On-site hardware only | No partner author, but the paper names an `onsite_hardware` system | Hardware only |
+| Mention only / None found | The partner is only mentioned, or no link was found | Check tie |
+| (backup person only) | Found only through `tab = "backup"` people | Backup |
 
 The private master workbook path is never part of a profile. Set `PUBMON_MASTER` in `.env`
 or pass `--master <path>`.

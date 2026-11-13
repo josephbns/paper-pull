@@ -10,6 +10,7 @@ from pubmon.sources.common import entity_id
 from pubmon.store import Store
 
 SUMMARY_FIELDS = [
+    "Partner tie",
     "Quantum?",
     "IBM hardware (suggested)",
     "Why selected",
@@ -136,7 +137,38 @@ def _tags(row: dict, texts: list[str], categories: set[str], settings: Settings)
     maybe = not on_topic and bool(find_terms(text, settings.broad_terms))
     row["Quantum?"] = "Yes" if on_topic else "Maybe" if maybe else "No"
     row["IBM hardware (suggested)"] = "Check: mentions " + ", ".join(hardware) if hardware else ""
-    row["tab"] = "Backup" if backup else "Main"
+    row["Partner tie"] = partner_tie(row, text, settings)
+    row["tab"] = TIE_TABS.get(row["Partner tie"], "Check tie")
+    if backup and row["tab"] != "Main":
+        row["tab"] = "Backup"
+
+
+# Where each kind of partner tie is listed in the generated workbook. Only an author tie
+# puts a paper on the main Publications sheet.
+TIE_TABS = {
+    "Author affiliation": "Main",
+    "Named researcher": "Main",
+    "On-site hardware only": "Hardware only",
+}
+
+
+def partner_tie(row: dict, text: str, settings: Settings) -> str:
+    """Name the strongest link between a paper and the partner institution."""
+    backup = {normalize_title(name) for name in settings.backup_names}
+    named = [
+        name
+        for name in row["Partner watchlist matches"].split("; ")
+        if name and normalize_title(name) not in backup
+    ]
+    if row["Partner affiliations"]:
+        return "Author affiliation"
+    if named:
+        return "Named researcher"
+    if find_terms(text, settings.onsite_hardware):
+        return "On-site hardware only"
+    if find_terms(text, (settings.partner_name,)):
+        return "Mention only"
+    return "None found"
 
 
 def _summary(

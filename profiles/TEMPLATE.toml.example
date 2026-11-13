@@ -11,6 +11,7 @@
 name = "TODO Partner Institution"    # e.g. "Cleveland Clinic"
 label = "TODO"                       # short label, e.g. "CCF"
 start_date = "2021-01-01"            # ignore papers published before this date
+onsite_hardware = []                 # names of an IBM system at the partner, e.g. ["ibm_cleveland"]
 workspace = "workspaces/TODO"        # this QIC's own history folder; never share one
 
 [institutions]
