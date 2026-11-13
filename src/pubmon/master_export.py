@@ -38,13 +38,8 @@ WIDE = {
     "Pub ID": 22,
 }
 # Paper sheets in workbook order; a row's tab (set in evidence.py) picks its sheet.
-SHEETS = ("Publications", "Hardware only", "Check tie", "Backup")
-SHEET_FOR_TAB = {
-    "Main": "Publications",
-    "Hardware only": "Hardware only",
-    "Check tie": "Check tie",
-    "Backup": "Backup",
-}
+SHEETS = ("Publications", "Check tie", "Backup")
+SHEET_FOR_TAB = {"Main": "Publications", "Check tie": "Check tie", "Backup": "Backup"}
 LINKS = (
     ("DOI", "https://doi.org/"),
     ("arXiv", "https://arxiv.org/abs/"),
@@ -54,8 +49,8 @@ LINKS = (
 READ_ME = (
     "One row per paper, built only from public metadata (OpenAlex, arXiv, Crossref). It never copies or changes your own master workbook.",
     "Publications starts with the approved 36 columns, followed by preprint links, tags and selection/affiliation evidence columns. Sources retains version history.",
-    "Partner tie shows how each paper links to the partner: Author affiliation (a source reports a partner-affiliated author) or Named researcher (a profile partner person is an author; the source reports no affiliation). Publications holds only these papers.",
-    "Hardware only: no partner author, but the paper names the partner's on-site IBM system. Check tie: the partner is only mentioned, or no link was found; review before counting.",
+    "Partner tie shows how each paper links to the partner: Author affiliation (a source reports a partner-affiliated author), Named researcher (a profile partner person is an author; the source reports no affiliation) or Used on-site IBM system (no partner author, but the paper names the partner's IBM system). Publications holds only these papers.",
+    "Check tie holds papers that only mention the partner, or show no link; review before counting.",
     'Backup holds papers found only through people marked tab = "backup" in the profile, with no partner tie.',
     "Quantum? is Yes when a profile topic phrase appears in a title or abstract or the arXiv category is a profile topic category, Maybe when only a broad word (such as quantum) appears, else No. It tags; it does not decide scope.",
     "IBM hardware (suggested) lists hardware phrases found in papers with no IBM author. It is a prompt to check, not a confirmation.",

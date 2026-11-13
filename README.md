@@ -180,10 +180,10 @@ only through that person to the generated workbook's Backup sheet. Topic terms f
 **Quantum?** column (Yes / Maybe / No); hardware terms fill **IBM hardware (suggested)** for
 papers with no IBM author.
 
-The **Publications** sheet holds only papers tied to the partner by an author (a reported
-partner affiliation, or a profile partner researcher by name); the **Partner tie** column says
-which. Papers that only used the partner's on-site IBM system go to **Hardware only**; papers
-that merely mention the partner, or show no link, go to **Check tie**.
+The **Publications** sheet holds only papers tied to the partner: by a reported partner
+affiliation, a profile partner researcher by name, or use of the partner's on-site IBM system.
+The **Partner tie** column says which. Papers that merely mention the partner, or show no link,
+go to **Check tie**.
 
 The real master path never goes in a profile. Put it in `.env` as
 `PUBMON_MASTER=C:\Research\Publications_Master.xlsx`, or pass `--master <path>`. Keep the

@@ -143,12 +143,12 @@ def _tags(row: dict, texts: list[str], categories: set[str], settings: Settings)
         row["tab"] = "Backup"
 
 
-# Where each kind of partner tie is listed in the generated workbook. Only an author tie
-# puts a paper on the main Publications sheet.
+# Where each kind of partner tie is listed in the generated workbook. Papers by partner
+# authors and papers that used the partner's on-site IBM system go on Publications.
 TIE_TABS = {
     "Author affiliation": "Main",
     "Named researcher": "Main",
-    "On-site hardware only": "Hardware only",
+    "Used on-site IBM system": "Main",
 }
 
 
@@ -165,7 +165,7 @@ def partner_tie(row: dict, text: str, settings: Settings) -> str:
     if named:
         return "Named researcher"
     if find_terms(text, settings.onsite_hardware):
-        return "On-site hardware only"
+        return "Used on-site IBM system"
     if find_terms(text, (settings.partner_name,)):
         return "Mention only"
     return "None found"

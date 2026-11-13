@@ -145,7 +145,7 @@ def test_partner_tie_decides_which_sheet_a_paper_goes_to(source_settings):
     cases = [
         ({"Partner affiliations": "Cleveland Clinic"}, "", "Author affiliation", "Main"),
         ({"Partner watchlist matches": "Synthetic Partner"}, "", "Named researcher", "Main"),
-        ({}, "Runs on ibm_cleveland", "On-site hardware only", "Hardware only"),
+        ({}, "Runs on ibm_cleveland", "Used on-site IBM system", "Main"),
         ({}, "Compared with work by Cleveland Clinic", "Mention only", "Check tie"),
         ({}, "Unrelated text", "None found", "Check tie"),
         ({"Partner watchlist matches": "Synthetic Backup"}, "Theory", "None found", "Backup"),

@@ -462,10 +462,10 @@ into the same `Settings` object the older format produces.
   `aliases`, optional `orcid`, and `tab` (`backup` routes papers found only through them to the
   Backup sheet).
 
-The generated master's Publications sheet holds only papers with a partner author tie (OpenAlex
-partner affiliation, or a profile partner person by name). On-site-hardware-only papers go to
-Hardware only; partner mentions and unlinked papers go to Check tie; backup-only papers to Backup
-(`evidence.partner_tie`, `master_export.SHEETS`).
+The generated master's Publications sheet holds only partner-tied papers: an OpenAlex partner
+affiliation, a profile partner person by name, or use of the partner's on-site IBM system
+(`onsite_hardware`). Partner mentions and unlinked papers go to Check tie; backup-only papers to
+Backup (`evidence.partner_tie`, `master_export.SHEETS`).
 
 The arXiv query is generated from partner people, phrases, categories and topic terms. IBM
 people are excluded from the search because their names would pull in quantum papers

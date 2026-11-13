@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-13 — Papers that used the on-site IBM system count
+
+- Owner decision: papers by outside groups that used the partner's on-site IBM system belong
+  on Publications. Their Partner tie reads "Used on-site IBM system"; the separate Hardware
+  only sheet is removed. Check tie (mention only / none found) and Backup are unchanged.
+- On the 13 Nov output this puts 150 papers on Publications (QAOA and short-rate models added).
+
 ## 2026-11-13 — Every Publications row ties to the partner
 
 - New **Partner tie** column (evidence.partner_tie): Author affiliation, Named researcher,

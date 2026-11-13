@@ -100,7 +100,8 @@ To start a new QIC:
    ```
 
 2. **Name the partner and choose a workspace.** Fill in `[qic]`. If the partner hosts an IBM
-   system, list its names in `onsite_hardware` (Cleveland Clinic: `ibm_cleveland`). `workspace` is the folder
+   system, list its names in `onsite_hardware` (Cleveland Clinic: `ibm_cleveland`). Papers by
+   outside groups that used that system then count, marked "Used on-site IBM system". `workspace` is the folder
    for this QIC's history and outputs, such as `"workspaces/my-qic"`. Never share a workspace
    between QICs: the history database would mix their papers.
 

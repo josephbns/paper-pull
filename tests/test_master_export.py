@@ -48,7 +48,6 @@ def test_generated_master_includes_all_history_on_rerun_without_touching_input(p
     book = load_workbook(second["paths"]["master"])
     assert book.sheetnames == [
         "Publications",
-        "Hardware only",
         "Check tie",
         "Backup",
         "Sources",
