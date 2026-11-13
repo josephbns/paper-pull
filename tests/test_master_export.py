@@ -46,9 +46,9 @@ def test_generated_master_includes_all_history_on_rerun_without_touching_input(p
     assert initial.read_bytes() == saved
     assert hashlib.sha256(original.read_bytes()).hexdigest() == before
     book = load_workbook(second["paths"]["master"])
-    assert book.sheetnames == ["Publications", "Sources", "Read me"]
+    assert book.sheetnames == ["Publications", "Sources", "Affiliation evidence", "Read me"]
     sheet = book["Publications"]
-    assert [cell.value for cell in sheet[1]] == HEADERS
+    assert [cell.value for cell in sheet[1]][: len(HEADERS)] == HEADERS
     assert sheet.max_row == 4
     assert sheet.freeze_panes == "B2" and len(sheet.tables) == 1
     rows = [dict(zip(HEADERS, values)) for values in sheet.iter_rows(min_row=2, values_only=True)]
@@ -61,10 +61,11 @@ def test_generated_master_includes_all_history_on_rerun_without_touching_input(p
             "Include in official count?",
             "SOW Tracking",
             "Theme (manual)",
-            "IBM Authors",
-            "CC and other Authors",
         ):
             assert row[name] is None
+    assert any(row["IBM Authors"] == "Synthetic IBM Author" for row in rows)
+    assert any(row["CC and other Authors"] == "Synthetic Clinic Author" for row in rows)
+    assert book["Affiliation evidence"].max_row > 1
     assert not any(c.data_type == "f" for s in book for cells in s for c in cells)
     book.close()
 
