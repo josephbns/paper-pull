@@ -38,19 +38,31 @@ def is_published(work: Work) -> bool:
     )
 
 
-def _rank(work: Work) -> tuple:
+def _rank(work: Work, preprint_dois: set[str]) -> tuple:
     authority = {Source.ARXIV: 0, Source.OPENALEX: 1, Source.CROSSREF: 2}
-    return is_published(work), authority[work.source], work.pub_date, work.source_id
+    published = is_published(work) and work.doi not in preprint_dois
+    return published, authority[work.source], work.pub_date, work.source_id
 
 
 def canonical_state(versions: list[Work], previous: dict | None = None) -> dict:
     """Prefer published metadata and retain known values when sources omit them."""
     if not versions:
         raise ValueError("A paper needs at least one normalized source version")
-    ranked = sorted(versions, key=_rank, reverse=True)
+    # A preprint DOI is not journal-publication evidence, even if arXiv lists it as a DOI.
+    preprint_dois = {
+        work.doi
+        for work in versions
+        if work.source == Source.CROSSREF and work.type == WorkType.PREPRINT and work.doi
+    }
+    ranked = sorted(versions, key=lambda work: _rank(work, preprint_dois), reverse=True)
     # Existing published state acts as a floor when a source drops journal metadata.
-    published = any(is_published(work) for work in ranked)
-    if previous and previous.get("status") == WorkStatus.PUBLISHED and not published:
+    published = any(_rank(work, preprint_dois)[0] for work in ranked)
+    if (
+        previous
+        and previous.get("status") == WorkStatus.PUBLISHED
+        and not published
+        and previous.get("doi") not in preprint_dois
+    ):
         state = dict(previous)
     else:
         state = asdict(ranked[0])
