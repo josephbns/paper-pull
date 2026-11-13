@@ -17,6 +17,17 @@ an audit trail; only the output is grouped.
 
 ## 1. Scope
 
+Owner-authorized addition (2026-11-13): `--xlsx` also generates a **new**
+`out/master_<date>.xlsx` from all canonical public history. Its Publications sheet uses
+the 36-column master layout, with Sources and Read me sheets for provenance/limitations.
+It never updates or copies the existing master. Internal/manual columns and unverified
+per-author affiliation splits stay blank; all known authors appear in Authors. Uncertain
+scope/duplicates and correction/retraction events stay flagged. AUTO IDs derive from
+history work keys and are not existing master Pub IDs; fresh backfills assign new IDs.
+Crossref's explicit preprint classification overrides publication inferred from that same
+DOI on arXiv, including correction of a previously inferred published state. Separate
+journal-publication evidence continues to establish published status.
+
 **In V1:** three discovery lanes (§4), Crossref enrichment, identity matching (§7), SQLite
 history (§5), read-only master reconciliation (§8), candidate CSV (§9), decision import (§10),
 CLI (§11), offline tests (§14).
