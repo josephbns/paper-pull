@@ -4,6 +4,8 @@
 links preprints to journal versions, and exports **one row per paper** for human review.
 Several changes to a paper stay on that same row. Uncertain matches remain separate and flagged.
 The application never updates your master workbook or copies its manual decision columns.
+With `--xlsx`, it also creates a **new master-format Excel file containing all collected
+papers**, including history with no new events. This is separate from any existing master.
 
 The six V1 implementation milestones are complete. Offline tests and synthetic end-to-end
 checks pass; **live API access, real-world recall and two weekly validation runs are still
@@ -31,13 +33,24 @@ In repository Settings → Secrets and variables → Actions, add repository sec
 Open **Actions → Generate candidate Excel → Run workflow**, select `main`, then click
 **Run workflow**. After it finishes, open that run and download the
 `publication-candidates-<run number>` artifact under **Artifacts**. Extract the ZIP and
-open its candidate `.xlsx`. Downloads require signing in to GitHub.
+open **`master_<date>.xlsx`** for the complete generated tracker. The candidate `.xlsx`
+contains only new/changed papers. Downloads require signing in to GitHub.
+
+The generated master has a sortable, filtered **Publications** sheet in the approved
+36-column layout, a **Sources** sheet with all authors, identifiers and version history,
+and **Read me** notes. DOI/arXiv/PubMed/OpenAlex cells link to public records. It preserves
+uncertain duplicates as separate flagged rows and labels correction/retraction notices.
+It fills public metadata; official count, SOW, theme and other manual fields stay blank.
+All authors appear in Authors; IBM/partner author splits are not inferred. Review scope
+flags before treating the collected set as confirmed collaboration publications.
+AUTO Pub IDs are stable within a history database, but change on fresh GitHub backfills.
 
 The workflow runs offline tests, lint/format/dependency checks, a synthetic dry run, fresh
 live source tests, then `pubmon run --backfill --no-master --xlsx`. Source-test failure stops
 collection. A partial collection fails the workflow; any remaining files are incomplete.
 It uses only public source metadata and never reads or updates the real master workbook.
-Artifacts expire after 14 days; download the ones you need.
+Artifacts expire after 14 days; download the ones you need. Each export creates a new file
+and refuses to overwrite an existing review/master export.
 
 Each manual run starts with fresh history, so it produces a new full backfill and can repeat
 papers from earlier runs. This is initial public-source validation and Excel generation;
