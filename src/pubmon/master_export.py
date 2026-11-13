@@ -8,6 +8,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
+from pubmon.evidence import DETAIL_FIELDS, SUMMARY_FIELDS
 from pubmon.export import SNAPSHOT_COLUMNS, _atomic
 from pubmon.master import HEADERS
 
@@ -16,8 +17,10 @@ def _flags(row: dict) -> str:
     flags = []
     if row.get("latest_decision") != "accepted":
         flags.append("Collaboration scope requires review")
-    if not row["ibm_confirmed"]:
+    if not row.get("ibm_affiliation_authors", row["ibm_confirmed"]):
         flags.append("IBM affiliation unconfirmed")
+    if "Partner affiliation authors" in row and not row["Partner affiliation authors"]:
+        flags.append("Partner affiliation unconfirmed")
     if row["possible_duplicate_of"]:
         flags.append("Possible duplicate: see Sources")
     for event in ("CORRECTION", "RETRACTED"):
@@ -47,6 +50,8 @@ def _master_row(row: dict) -> dict:
         "Pub Status": status,
         "Date of Publication": date.fromisoformat(row["pub_date"]) if row["pub_date"] else None,
         "Authors": row["all_authors"],
+        "IBM Authors": row.get("ibm_affiliation_authors", ""),
+        "CC and other Authors": row.get("Partner affiliation authors", ""),
         "arXiv": row["arxiv_id"],
         "PubMed": row["pmid"],
         "DOI": row["doi"],
@@ -54,6 +59,7 @@ def _master_row(row: dict) -> dict:
         "Pub ID": "AUTO-" + row["work_key"],
         "Merge source": row["sources"],
         "Review flag": _flags(row),
+        **{name: row.get(name, "") for name in SUMMARY_FIELDS},
     }
 
 
@@ -89,11 +95,12 @@ def write_master(rows: list[dict], path: Path) -> None:
         book = Workbook()
         sheet = book.active
         sheet.title = "Publications"
-        sheet.append(HEADERS)
+        headers = HEADERS + SUMMARY_FIELDS
+        sheet.append(headers)
         ordered = sorted(rows, key=lambda row: (row["pub_date"], row["title"]), reverse=True)
         for row in ordered:
             values = _master_row(row)
-            sheet.append([values.get(name, "") for name in HEADERS])
+            sheet.append([values.get(name, "") for name in headers])
             for name, prefix in (
                 ("DOI", "https://doi.org/"),
                 ("arXiv", "https://arxiv.org/abs/"),
@@ -107,7 +114,7 @@ def write_master(rows: list[dict], path: Path) -> None:
             sheet, "PublicationsTable", {"Title": 65, "Name": 50, "Authors": 60, "Review flag": 65}
         )
         sources = book.create_sheet("Sources")
-        columns = SNAPSHOT_COLUMNS + ["all_authors", "review_events"]
+        columns = SNAPSHOT_COLUMNS + ["all_authors", "review_events"] + SUMMARY_FIELDS
         sources.append(columns)
         for row in ordered:
             sources.append([row.get(name, "") for name in columns])
@@ -116,13 +123,26 @@ def write_master(rows: list[dict], path: Path) -> None:
             "SourcesTable",
             {"title": 65, "versions": 70, "all_authors": 60, "possible_duplicate_of": 70},
         )
+        evidence = book.create_sheet("Affiliation evidence")
+        evidence.append(DETAIL_FIELDS)
+        for row in ordered:
+            for item in row.get("affiliation_evidence", []):
+                evidence.append([item.get(name, "") for name in DETAIL_FIELDS])
+                link = evidence.cell(evidence.max_row, DETAIL_FIELDS.index("source_link") + 1)
+                if str(link.value).startswith(("https://", "http://")):
+                    link.hyperlink = link.value
+        _style(evidence, "AffiliationEvidenceTable", {"title": 65, "basis": 60, "institution": 45})
         notes = book.create_sheet("Read me")
         for text in (
             "Generated master — public source metadata, one row per canonical paper.",
-            "Publications uses the approved 36-column layout; Sources retains identifiers and version history.",
+            "Publications starts with the approved 36 columns, followed by selection/affiliation evidence columns. Sources retains version history.",
             "Review flags are unresolved questions, not an official collaboration/counting decision.",
             "Manual count, SOW, theme, involvement and other internal fields are intentionally blank.",
-            "Authors lists all known authors. IBM Authors and CC and other Authors are blank: individual affiliation splits are not inferred.",
+            "IBM Authors and CC and other Authors contain only source-reported IBM/partner affiliation names. Authors contains all authors, including other institutions.",
+            "Partner affiliation authors/affiliations use configured partner IDs (CCF by default). Institution names/lineages are as reported by OpenAlex, not independent verification.",
+            "Affiliation evidence links each matched author to the source publication and matched institution/profile IDs. Evidence may come from a linked paper version.",
+            "Watchlist name matches are separate evidence: they do not establish affiliation. Common-name collisions are marked in Affiliation evidence.",
+            "Discovery routes describe query inclusion, not confirmed partnership membership or quantum relevance. Missing affiliation evidence stays unverified.",
             "Dates describe the canonical version; linked version dates and identifiers are in Sources.",
             "AUTO IDs identify history records; they are not existing master Pub IDs. Fresh GitHub backfills generate new AUTO IDs.",
             "Possible duplicates stay separate pending review. Correction/retraction flags require review.",
