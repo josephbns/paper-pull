@@ -74,6 +74,7 @@ jobs:
         with:
           name: publication-candidates-${{ github.run_number }}
           path: |
+            out/master_*.xlsx
             out/candidates_*.xlsx
             out/candidates_*.csv
             out/works_*.csv
@@ -92,11 +93,12 @@ jobs:
           text = (
               "## Publication collection\n\n"
               f"Collection step: **{outcome}**.\n\n"
-              "Download the publication-candidates artifact below if available. "
+              "Download the publication-candidates artifact below and open master_<date>.xlsx for the full generated tracker. "
+              "The candidate Excel contains only new/changed papers. "
               "A failed collection can leave partial files; do not treat those as a complete result.\n\n"
               "This manual run starts with fresh history and searches from the configured start date. "
               "Repeated runs can include the same papers; weekly incremental state is not implemented here. "
-              "No real master workbook is used or changed. Review the candidate Excel before using its contents.\n"
+              "No real master workbook is used or changed. Manual fields remain blank and uncertain papers are flagged for review.\n"
           )
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a") as stream:
               stream.write(text)
