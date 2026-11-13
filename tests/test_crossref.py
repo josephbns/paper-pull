@@ -54,9 +54,18 @@ def test_persistent_http_failure_becomes_lane_failure(monkeypatch, source_settin
 
 
 def test_client_error_is_not_retried(monkeypatch, source_settings, api_fixture):
-    calls = transport(monkeypatch, api_fixture("crossref.json"), [404])
-    with pytest.raises(LaneFailed, match="HTTP 404"):
+    calls = transport(monkeypatch, api_fixture("crossref.json"), [403])
+    with pytest.raises(LaneFailed, match="HTTP 403"):
         crossref.enrich("10.5555/synthetic-1", source_settings)
+    assert len(calls) == 1
+
+
+def test_doi_not_in_crossref_is_counted_without_retry(monkeypatch, source_settings, api_fixture):
+    calls = transport(monkeypatch, api_fixture("crossref.json"), [404])
+    report = FetchReport()
+    assert crossref.enrich("10.5555/synthetic-1", source_settings, report=report) == {}
+    assert report.skipped == {"not_found": 1}
+    assert report.raw_records == []
     assert len(calls) == 1
 
 
